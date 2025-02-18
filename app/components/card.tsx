@@ -1,7 +1,7 @@
 import React from "react";
 
 interface CardProps {
-  image: string[];
+  image: string;
   name: string;
   price: number;
 }
@@ -9,7 +9,7 @@ interface CardProps {
 const Card = ({ image, name, price }: CardProps) => (
   <div className="relative border border-[#A7A7A7] w-[250px] cursor-pointer overflow-hidden hover:border-2 hover:border-[#A7A7A7]">
     <div className="w-full mb-2">
-      <img src={image[0]} alt={name} className="w-full block object-cover" />
+      <img src={image} alt={name} className="w-full block object-cover" />
     </div>
     <div className="p-2">
       <div className="text-base mb-1 text-[#FAF9F6]">{name}</div>

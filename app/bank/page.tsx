@@ -1,15 +1,11 @@
 import React from 'react'
-import { createClient } from '@/utils/supabase/server';
+import useValidateSession from '../utils/session';
 
-const Bank = async () => {
-  const supabase = await createClient();
-  const { data: instruments } = await supabase.from("instruments").select();
-
-  return <pre>{JSON.stringify(instruments, null, 2)}</pre>
-
+function Bank() {
+useValidateSession();
+  return (
+    <div>Bank</div>
+  )
 }
 
 export default Bank
-
-
-
