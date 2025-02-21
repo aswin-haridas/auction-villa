@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import checkAuth from "@/app/utils/auth";
+import { checkAuth } from "../utils/session";
 
 const AccessPage = () => {
   const [username, setUsername] = useState("");
@@ -21,13 +21,13 @@ const AccessPage = () => {
   };
 
   return (
-    <div className="p-4 flex flex-col items-center justify-center">
-      <h2 className="text-2xl font-bold mb-6 text-white">Access Page</h2>
+    <div className="p-4 flex flex-col items-center justify-center h-screen">
+      <h2 className="text-2xl font-bold mb-6 text-white">Access</h2>
       <div className="p-8 shadow-md w-full max-w-md">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-white mb-2">Username:</label>
             <input
+              placeholder="Username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -35,8 +35,8 @@ const AccessPage = () => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-white mb-2">Password:</label>
             <input
+              placeholder="Password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

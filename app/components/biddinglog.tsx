@@ -1,33 +1,88 @@
 "use client";
-import React from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../utils/client";
 
 interface Bid {
   id: number;
-  user: string;
+  item_id: string;
   amount: number;
-  timestamp: string;
+  created_at: string;
+  username: string;
+}
+
+interface BiddingLogProps {
+  itemId: string;
 }
 
 const userColors: string[] = ["#d062fc", "#8efc62"];
 
-const fakeBids: Bid[] = [
-  { id: 1, user: "Alice", amount: 100, timestamp: "2024-01-20 10:00:00" },
-  { id: 2, user: "Charlie", amount: 150, timestamp: "2024-01-20 10:01:00" },
-  { id: 3, user: "Alice", amount: 120, timestamp: "2024-01-20 10:02:00" },
-  { id: 4, user: "Charlie", amount: 170, timestamp: "2024-01-20 10:03:00" },
-  { id: 5, user: "Alice", amount: 130, timestamp: "2024-01-20 10:04:00" },
-  { id: 6, user: "Charlie", amount: 180, timestamp: "2024-01-20 10:05:00" },
-];
+const BiddingLog: React.FC<BiddingLogProps> = ({ itemId }) => {
+  const [bids, setBids] = useState<Bid[]>([]);
 
-const BiddingLog: React.FC = () => (
-  <div className="mt-5 p-2.5 max-h-[200px] overflow-y-auto">
-    {fakeBids.map(({ id, user, amount, timestamp }, index) => (
-      <div key={id} className="mb-2.5">
-        <strong style={{ color: userColors[index % 2] }}>{user}</strong> bid
-        <strong className="font-bold"> ${amount}</strong> at {timestamp}
-      </div>
-    ))}
-  </div>
-);
+  useEffect(() => {
+    const fetchBids = async () => {
+      const { data, error } = await supabase
+        .from("Bid")
+        .select("*")
+        .eq("item_id", itemId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching bids:", error);
+        return;
+      }
+
+      if (data) {
+        setBids(data);
+      }
+    };
+
+    fetchBids();
+
+    const channel = supabase
+      .channel(`Bid-${itemId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "Bid",
+          filter: `item_id=eq.${itemId}`,
+        },
+        (payload) => {
+          setBids((prev) => [payload.new as Bid, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [itemId]);
+
+  return (
+    <div className="mt-5 pt-6 max-h-[300px] overflow-auto">
+      {bids.length === 0 ? (
+        <p className="text-gray-400">No bids yet</p>
+      ) : (
+        bids.map((bid, index) => (
+          <div 
+            key={bid.id} 
+            className="mb-3"
+          >
+            <span style={{ color: userColors[index % 2] }} className="font-bold">
+              {bid.username || "Anonymous"}
+            </span>
+            <span className="text-white"> bid </span>
+            <span className="text-yellow-400 font-bold">{bid.amount}u</span>
+            <span className="text-gray-400 text-sm ml-2">
+              {new Date(bid.created_at).toLocaleString()}
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
 
 export default BiddingLog;

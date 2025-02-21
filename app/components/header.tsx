@@ -11,6 +11,7 @@ const Header: React.FC = () => {
   const [username, setUsername] = useState<string>("");
   const signOut = useSignOut(); // Call the hook inside the component
 
+
   useEffect(() => {
     const changeSymbol = () => {
       setSymbol(symbols[Math.floor(Math.random() * symbols.length)]);
@@ -28,16 +29,16 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error(error);
     }
-  }, []);
+  }, [username]);
 
   return (
     <div className="w-full h-14 flex items-center px-4">
       <div className="text-red-500 flex-1">{symbol}</div>
       <div className="flex justify-around flex-1">
-        {["Auctions", "Basement", "Trade", "Bank"].map((item, idx) => (
+        {[ "Basement", "Auction", "Trade", "Bank"].map((item, idx) => (
           <Link
             key={idx}
-            href={item.toLowerCase() === "auctions" ? "/" : `/${item.toLowerCase()}`}
+            href={item.toLowerCase() === "basement" ? "/" : `/${item.toLowerCase()}`}
             className="text-red-500 mx-2 no-underline text-base cursor-pointer hover:underline"
           >
             {item}
@@ -50,7 +51,7 @@ const Header: React.FC = () => {
         </button>
       </div>
     </div>
-  );
+  )
 };
 
 export default Header;

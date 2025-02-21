@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   description: "Auktion is good",
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,7 +21,6 @@ export default function RootLayout({
       <body
         className={` ${inter.className} antialiased`}
       >
-        <Header />
         {children}
       </body>
     </html>
