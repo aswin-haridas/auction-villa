@@ -54,7 +54,7 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
             key={value}
             onClick={() => setSelectedValue(value)}
             className={`flex flex-col text-center cursor-pointer justify-center text-base border-2 w-1/4 h-10 rounded-sm ${
-              selectedValue !== value ? "border-red-600" : "bg-white text-black"
+              selectedValue !== value ? "border-red-800" : "bg-white text-black"
             }`}
           >
             {value}u
@@ -69,7 +69,7 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
           }}
           type="number"
           placeholder="Custom Amount"
-          className="border-2 border-red-600 placeholder-gray-500 font-bold px-2 bg-transparent text-white h-10 rounded-sm"
+          className="border-2 border-red-800 placeholder-gray-500 font-bold px-2 bg-transparent text-white h-10 rounded-sm"
         />
       </div>
 
@@ -81,7 +81,7 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
           className={`relative flex flex-col text-center justify-center border-2 border-red-800 font-bold w-60 h-10 rounded-sm ${
             isAnimating
               ? "bg-transparent cursor-not-allowed"
-              : "bg-red-700 cursor-pointer"
+              : "bg-red-800 cursor-pointer"
           }`}
         >
           <div className="relative z-10">

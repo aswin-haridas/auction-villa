@@ -187,7 +187,7 @@ export default function Bidding() {
             </span>
           </p>
           <p>
-            Owner: <span className="font-semibold">{auction.owner.toUpperCase()}</span>
+            Owner: <span className="font-semibold">{auction.owner}</span>
           </p>
           <div>
             <h2 className="text-red-800 underline underline-offset-2 text-lg font-semibold">
