@@ -10,9 +10,15 @@
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "autoprefixer": "10.4.20",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
     "next": "latest",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "sharp": "^0.33.5",
+    "tailwind-merge": "^3.0.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

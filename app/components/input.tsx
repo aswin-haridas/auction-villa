@@ -1,6 +1,6 @@
 import React from 'react'
 
-const input = ({type,placeholder}: {type: string , placeholder: string}) => {
+const Input = ({type,placeholder}: {type: string , placeholder: string}) => {
   return (
     <input
           type= {type}
@@ -10,4 +10,4 @@ const input = ({type,placeholder}: {type: string , placeholder: string}) => {
   )
 }
 
-export default input
+export default Input
