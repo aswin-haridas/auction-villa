@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import BiddingControls from "@/app/components/biddingControls";
+import BidHistory from "@/app/components/bidHistory";
 import { supabase } from "@/app/utils/client";
 import {
   fetchAuctionData,
@@ -12,6 +13,7 @@ import {
   subscribeToBidUpdates,
 } from "@/app/middlewares/biddingMiddleware";
 import Header from "@/app/components/header";
+import { playfair } from "@/app/font/fonts";
 
 interface AuctionData {
   id: string;
@@ -36,7 +38,7 @@ interface Bid {
 
 export default function Bidding() {
   const { id } = useParams<{ id: string }>();
-  
+
   // States declared at the top for consistent hook order.
   const [auction, setAuction] = useState<AuctionData | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
@@ -77,7 +79,9 @@ export default function Bidding() {
 
     const bidChannel = subscribeToBidUpdates(id, (payload) => {
       // Use functional update to ensure we always have the latest highest bid.
-      setHighestBid((prev) => (payload.new.amount > prev ? payload.new.amount : prev));
+      setHighestBid((prev) =>
+        payload.new.amount > prev ? payload.new.amount : prev
+      );
     });
 
     return () => {
@@ -138,15 +142,12 @@ export default function Bidding() {
   if (loading) return <div className="p-4">Loading...</div>;
   if (!auction) return <div className="p-4">No auction data found.</div>;
 
-  const userColors: string[] = ["#d062fc", "#8efc62"];
-
   return (
     <>
       <Header />
-      <div className="p-4 border border-red-800 flex h-screen">
-        {/* Left Pane: Thumbnails and Main Image */}
-        <div className="w-1/2 pr-2 flex">
-          <div className="flex flex-col">
+      <div className="pt-8 px-12 flex justify-between">
+        <div className="flex">
+          <div className="flex flex-col pr-2 space-y-2">
             {auction.image.map((img, i) => (
               <Image
                 key={i}
@@ -155,8 +156,8 @@ export default function Bidding() {
                 src={img}
                 width={100}
                 height={100}
-                className={`border h-28 flex cursor-pointer ${
-                  currentImage === i ? "border-offwhite" : "opacity-50"
+                className={`h-28 flex cursor-pointer ${
+                  currentImage !== i && "opacity-50 grayscale"
                 }`}
                 style={{ objectFit: "cover" }}
               />
@@ -166,7 +167,7 @@ export default function Bidding() {
             <Image
               src={auction.image[currentImage]}
               alt={auction.name}
-              width={450}
+              width={500}
               height={500}
               priority
               style={{ objectFit: "cover" }}
@@ -174,11 +175,14 @@ export default function Bidding() {
           </div>
         </div>
 
-        {/* Right Pane: Auction Details and Bidding */}
-        <div className="w-1/2 pl-2 space-y-4">
-          <h1 className="text-3xl font-semibold">{auction.name}</h1>
+        <div className="w-6/12 flex flex-col justify-between">
+          <div>
+          <h1 className={`text-5xl text-[#FEF9E1] mb-8 ${playfair.className}`}>
+            {auction.name}
+          </h1>
           <p className="text-green-500">
-            Starting Price: <span className="font-semibold">{auction.price}u</span>
+            Starting Price:{" "}
+            <span className="font-semibold">{auction.price}u</span>
           </p>
           <p>
             End Time:{" "}
@@ -190,7 +194,7 @@ export default function Bidding() {
             Owner: <span className="font-semibold">{auction.owner}</span>
           </p>
           <div>
-            <h2 className="text-red-800 underline underline-offset-2 text-lg font-semibold">
+            <h2 className="text-red-800 underline text-lg font-semibold">
               Current Bid
             </h2>
             <h1 className="text-4xl font-bold">{currentBid}u</h1>
@@ -199,27 +203,15 @@ export default function Bidding() {
             Highest Bid: <span className="font-semibold">{highestBid}u</span>
           </p>
           <p>
-            Highest Bidder: <span className="font-semibold">{highestBidder}</span>
+            Highest Bidder:{" "}
+            <span className="font-semibold">{highestBidder}</span>
           </p>
-          <BiddingControls buyOutPrice={auction.buyOutPrice} itemId={auction.id} />
-          <div className="mt-5 pt-6 max-h-[300px] overflow-auto">
-            {bids.length === 0 ? (
-              <p className="text-gray-400">No bids yet</p>
-            ) : (
-              bids.map((bid, index) => (
-                <div key={bid.bid_id} className="mb-3">
-                  <span style={{ color: userColors[index % userColors.length] }} className="font-bold">
-                    {bid.user_id || "Anonymous"}
-                  </span>
-                  <span className="text-white"> bid </span>
-                  <span className="text-yellow-400 font-bold">{bid.amount}u</span>
-                  <span className="text-gray-400 text-sm ml-2">
-                    {new Date(bid.timestamp).toLocaleString()}
-                  </span>
-                </div>
-              ))
-            )}
           </div>
+          <BidHistory bids={bids} />
+          <BiddingControls
+            buyOutPrice={auction.buyOutPrice}
+            itemId={auction.id}
+          />
         </div>
       </div>
     </>

@@ -5,7 +5,6 @@ import { supabase } from "../utils/client";
 import { getUsername } from "../utils/session";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-
 interface AuctionData {
   name: string;
   description: string;
@@ -20,7 +19,6 @@ interface AuctionData {
 
 const Trade: React.FC = () => {
   const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
   const [price, setPrice] = useState<number>(0);
   const [buyOutPrice, setBuyOutPrice] = useState<number>(0);
   const [endTime, setEndTime] = useState<string>("");
@@ -31,8 +29,12 @@ const Trade: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username) return alert("Please log in to create an auction.");
-    if (images.length === 0) return alert("Please upload at least one image.");
+    if (!username) {
+      return alert("Please log in to create an auction.");
+    }
+    if (images.length === 0) {
+      return alert("Please upload at least one image.");
+    }
 
     try {
       const imageUrls: string[] = await Promise.all(
@@ -43,13 +45,14 @@ const Trade: React.FC = () => {
             .upload(uniqueName, image, { cacheControl: "3600", upsert: false });
 
           if (error) throw new Error("Failed to upload image");
-          return supabase.storage.from("auction-images").getPublicUrl(data.path).data.publicUrl;
+          return supabase.storage.from("auction-images").getPublicUrl(data.path)
+            .data.publicUrl;
         })
       );
 
       const auctionData: AuctionData = {
         name,
-        description,
+        description: "", // Added description as required
         price,
         buyout_price: buyOutPrice,
         end_time: new Date(endTime).toISOString(),
@@ -77,9 +80,8 @@ const Trade: React.FC = () => {
   return (
     <>
       <Header />
-      <h1>Create a new auction</h1>
+      
     </>
   );
 };
-
 export default Trade;

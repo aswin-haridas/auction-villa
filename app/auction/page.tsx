@@ -46,7 +46,6 @@ function Auction() {
         <p className={`${anton.className} text-gray-300 text-3xl p-6`}>
           Live auctions
         </p>
-        <hr className="border border-[#A7A7A7] w-4/5 my-4" />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
           {auctionList}
         </div>

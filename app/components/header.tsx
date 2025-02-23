@@ -9,8 +9,7 @@ const Header: React.FC = () => {
 
   const [symbol, setSymbol] = useState<string>("");
   const [username, setUsername] = useState<string>("");
-  const signOut = useSignOut(); // Call the hook inside the component
-
+  const signOut = useSignOut(); 
 
   useEffect(() => {
     const changeSymbol = () => {
@@ -32,21 +31,21 @@ const Header: React.FC = () => {
   }, [username]);
 
   return (
-    <div className="w-full h-14 flex items-center px-4">
-      <div className="text-red-500 flex-1">{symbol}</div>
+    <div className="w-full h-14 flex items-center pt-4 px-12 ">
+      <div className="text-[#ba3737] flex-1">{symbol}</div>
       <div className="flex justify-around flex-1">
         {[ "Basement", "Auction", "Trade", "Bank"].map((item, idx) => (
           <Link
             key={idx}
             href={item.toLowerCase() === "basement" ? "/" : `/${item.toLowerCase()}`}
-            className="text-red-500 mx-2 no-underline text-base cursor-pointer hover:underline"
+            className="text-[#ba3737] no-underline text-base cursor-pointer hover:underline"
           >
             {item}
           </Link>
         ))}
       </div>
       <div className="flex justify-end flex-1">
-        <button onClick={signOut} className="text-red-500 mx-2 text-base cursor-pointer hover:underline">
+        <button onClick={signOut} className="text-[#ba3737] text-base cursor-pointer hover:underline">
           {username || "###"}
         </button>
       </div>
