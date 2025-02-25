@@ -17,7 +17,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { user_id, amount } = req.body;
 
   try {
-    // 1. Input validation
+    // 1. Input Validation
     const bidAmount = parseInt(amount as string, 10);
     if (isNaN(bidAmount) || bidAmount <= 0) {
       return res.status(400).json({ error: "Invalid bid amount" });
@@ -31,7 +31,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       .single();
 
     if (auctionError) {
-      throw new Error(`Error fetching auction  ${auctionError.message}`);
+      console.error("Error fetching auction:", auctionError);
+      return res.status(500).json({ error: "Failed to fetch auction data" });
     }
 
     if (!auctionData || auctionData.status !== "active") {
@@ -39,28 +40,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     // 3. Check if bid exceeds current highest bid
-    if (bidAmount <= auctionData.currentBid) {
+    if (bidAmount <= auctionData.highest_bid) {
       return res.status(400).json({ error: "Bid amount must exceed current highest bid" });
     }
 
-    // 4. Insert new bid
+    // 4. Insert new bid (using a transaction for atomicity)
     const bidId = uuidv4();
-    const { error: bidError } = await supabase
-      .from("Bid")
-      .insert([{ bid_id: bidId, auction_id: auctionId, user_id, amount: bidAmount, timestamp: new Date() }]);
+    const { error: bidError } = await supabase.rpc('insert_bid', {
+      bid_id: bidId,
+      auction_id: auctionId,
+      user_id: user_id,
+      amount: bidAmount,
+      timestamp: new Date(),
+    });
 
     if (bidError) {
-      throw new Error(`Error inserting bid: ${bidError.message}`);
-    }
-
-    // 5. Update auction with new highest bid
-    const { error: updateError } = await supabase
-      .from("Auction")
-      .update({ currentBid: bidAmount, currentHighestBidderId: user_id })
-      .eq("id", auctionId);
-
-    if (updateError) {
-      throw new Error(`Error updating auction: ${updateError.message}`);
+      console.error("Error inserting bid:", bidError);
+      return res.status(500).json({ error: "Failed to place bid" });
     }
 
     return res.status(200).json({ message: "Bid placed successfully" });
