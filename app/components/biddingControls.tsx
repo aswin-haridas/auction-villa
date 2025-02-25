@@ -1,10 +1,7 @@
-import React from "react";
-import {
-  buyOutItem,
-  leaveAuction,
-  placeBid,
-} from "../middlewares/biddingMiddleware";
+"use client";
+import React, { useState } from "react";
 import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const biddingValues = [100, 500, 1000, 5000];
 
@@ -14,39 +11,79 @@ interface BiddingControlsProps {
 }
 
 const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
-  const [selectedValue, setSelectedValue] = React.useState(100);
-  const [countdown, setCountdown] = React.useState<number | null>(null);
-  const [isAnimating, setIsAnimating] = React.useState(false);
+  const router = useRouter();
+  const [selectedValue, setSelectedValue] = useState(100);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Handle placing a bid with a countdown animation.
-  const handlePlaceBid = () => {
+  const handlePlaceBid = async () => {
     setIsAnimating(true);
     setCountdown(3);
+    setError(null);
+    setSuccessMessage(null);
 
-    placeBid(selectedValue, itemId);
-
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === 1) {
-          clearInterval(countdownInterval);
-          setIsAnimating(false);
-          return null;
-        }
-        return prev ? prev - 1 : null;
+    try {
+      const res = await fetch(`/api/bidding?bidding=placeBid&itemId=${itemId}&amount=${selectedValue}`, {
+        method: "POST",
       });
-    }, 1000);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to place bid");
+      }
+      setSuccessMessage("Bid placed successfully!");
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setTimeout(() => {
+        setIsAnimating(false);
+        setCountdown(null);
+        setError(null);
+        setSuccessMessage(null);
+      }, 3000);
+    }
   };
 
   const handleBuyout = async () => {
-    await buyOutItem(buyOutPrice, itemId);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch(`/api/bidding?bidding=buyOut&itemId=${itemId}&buyOutPrice=${buyOutPrice}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to buy out auction");
+      }
+      setSuccessMessage("Auction bought out successfully!");
+    } catch (error: any) {
+      setError(error.message);
+    }
   };
 
   const handleLeave = async () => {
-    await leaveAuction(itemId);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch(`/api/bidding?bidding=leaveAuction&itemId=${itemId}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to leave auction");
+      }
+      setSuccessMessage("You have left the auction.");
+      router.back();
+    } catch (error: any) {
+      setError(error.message);
+    }
   };
 
   return (
     <div>
+      {error && <div className="text-red-500 mb-2">{error}</div>}
+      {successMessage && <div className="text-green-500 mb-2">{successMessage}</div>}
       <div className="flex space-x-4">
         {biddingValues.map((value) => (
           <div
@@ -63,8 +100,8 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
 
       <div className="flex space-x-4 mt-6">
         <input
-          onChange={(event) => {
-            const inputValue = parseInt(event.target.value, 10);
+          onChange={(e) => {
+            const inputValue = parseInt(e.target.value, 10);
             if (!isNaN(inputValue) && inputValue > 0) {
               setSelectedValue(inputValue);
             }
@@ -85,17 +122,11 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
             {countdown ? `Wait ${countdown} sec` : "Place Bid"}
           </div>
         </div>
-        <div
-          onClick={handleBuyout}
-          className="cursor-pointer group relative flex flex-col text-center justify-center font-bold border-2 border-red-800 w-60 h-10 text-cyan-300 "
-        >
+        <div onClick={handleBuyout} className="cursor-pointer group relative flex flex-col text-center justify-center font-bold border-2 border-red-800 w-60 h-10 text-cyan-300 ">
           <div className="relative z-10">Buy Out: {buyOutPrice}u</div>
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[linear-gradient(45deg,#ffffff33_25%,transparent_25%,transparent_50%,#ffffff33_50%,#ffffff33_75%,transparent_75%,transparent_100%)] bg-[length:40px_40px]"></div>
         </div>
-        <div
-          onClick={handleLeave}
-          className="cursor-pointer flex flex-col justify-center items-center font-bold border-2 border-red-800 w-14 h-10 text-gray-500 hover:text-gray-400"
-        >
+        <div onClick={handleLeave} className="cursor-pointer flex flex-col justify-center items-center font-bold border-2 border-red-800 w-14 h-10 text-gray-500 hover:text-gray-400">
           <LogOut className="w-6 h-6" />
         </div>
       </div>
