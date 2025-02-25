@@ -37,6 +37,8 @@ interface Bid {
   auction_id: string;
 }
 
+
+
 export default function Bidding() {
   const { id } = useParams<{ id: string }>();
 
