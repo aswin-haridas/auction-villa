@@ -1,194 +1,159 @@
-import { supabase } from "../utils/client";
-import { checkUsernameExists } from "../utils/session";
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "@/types_db";
+import { Session, User } from "@supabase/supabase-js";
+import { decode } from "jsonwebtoken";
+import { cookies } from "next/headers";
 
-/**
- * Places a bid on an auction item.
- * @param selectedValue - The amount to bid.
- * @param itemId - The ID of the auction item.
- * @returns The newly placed bid data or an error if the operation fails.
- */
-const placeBid = async (selectedValue: number, itemId: string) => {
-  const username = checkUsernameExists();
-  const highestBid = await fetchHighestBidData(itemId);
+interface SupabaseConfig {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  sessionCookieName: string;
+}
 
-  const newBid = highestBid?.data ? selectedValue + highestBid.data.amount : selectedValue;
-
-  const { data, error } = await supabase
-    .from("Bid")
-    .insert([{ item_id: itemId, amount: newBid, username }])
-    .select();
-
-  if (error) {
-    throw new Error(`Failed to place bid: ${error.message}`);
-  }
-
-  return data;
+const config: SupabaseConfig = {
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  sessionCookieName: "sb:token", // Default cookie name, can be overridden
 };
 
-/**
- * Fetches auction data based on the given auction ID.
- * @param id - The auction ID.
- * @returns The auction data or an error if the operation fails.
- */
-async function fetchAuctionData(id: string) {
+const supabase = createClient<Database>(config.supabaseUrl, config.supabaseAnonKey);
+
+export const fetchAuctionData = async (id: string) => {
   const { data, error } = await supabase
     .from("Auction")
     .select("*")
     .eq("id", id)
     .single();
-
   return { data, error };
-}
+};
 
-/**
- * Subscribes to auction updates.
- * @param id - The auction ID.
- * @param callback - A function to handle update payloads.
- * @returns The auction subscription channel.
- */
-function subscribeToAuctionUpdates(id: string, callback: (payload: any) => void) {
-  return supabase
-    .channel("Auction")
-    .on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "auctions", filter: `id=eq.${id}` },
-      callback
-    )
-    .subscribe();
-}
-
-/**
- * Fetches the highest bid for a given auction item.
- * @param id - The auction item ID.
- * @returns The highest bid data or an error if the operation fails.
- */
-async function fetchHighestBidData(id: string) {
+export const fetchHighestBidData = async (id: string) => {
   const { data, error } = await supabase
     .from("Bid")
     .select("amount")
-    .eq("item_id", id)
+    .eq("auction_id", id)
     .order("amount", { ascending: false })
     .limit(1)
     .single();
-
   return { data, error };
-}
+};
 
-/**
- * Fetches the highest bidder's username for a given auction item.
- * @param id - The auction item ID.
- * @returns The highest bidder's username or an error if the operation fails.
- */
-async function fetchHighestBidder(id: string) {
+export const fetchHighestBidder = async (id: string) => {
   const { data, error } = await supabase
     .from("Bid")
-    .select("username")
-    .eq("item_id", id)
+    .select("user_id")
+    .eq("auction_id", id)
     .order("amount", { ascending: false })
     .limit(1)
     .single();
 
-  return { data, error };
-}
+  if (error || !data) return {  null, error };
 
-/**
- * Subscribes to bid updates for a given auction item.
- * @param id - The auction item ID.
- * @param callback - A function to handle bid update payloads.
- * @returns The bid subscription channel.
- */
-function subscribeToBidUpdates(id: string, callback: (payload: any) => void) {
+  const {  userData, error: userError } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", data.user_id)
+    .single();
+
+  return {  userData, error: userError };
+};
+
+export const placeBid = async (amount: number, auctionId: string) => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new Error("You must be logged in to place a bid.");
+  }
+  const { data, error } = await supabase
+    .from("Bid")
+    .insert([{ amount, auction_id: auctionId, user_id: session.user.id }]);
+  if (error) {
+    throw new Error(`Error placing bid: ${error.message}`);
+  }
+  return { data, error };
+};
+
+export const buyOutItem = async (buyOutPrice: number, auctionId: string) => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new Error("You must be logged in to buy out an item.");
+  }
+  const { data, error } = await supabase
+    .from("Auction")
+    .update({ status: "bought_out", currentBid: buyOutPrice })
+    .eq("id", auctionId);
+  if (error) {
+    throw new Error(`Error buying out item: ${error.message}`);
+  }
+  return { data, error };
+};
+
+export const leaveAuction = async (auctionId: string, userId: string | null) => {
+  if (!userId) {
+    throw new Error("You must be logged in to leave an auction.");
+  }
+  const { data, error } = await supabase
+    .from("Bid")
+    .delete()
+    .eq("auction_id", auctionId)
+    .eq("user_id", userId);
+  if (error) {
+    throw new Error(`Error leaving auction: ${error.message}`);
+  }
+  return { data, error };
+};
+
+export const subscribeToAuctionUpdates = (
+  auctionId: string,
+  callback: (payload: { new: any; old: any }) => void
+) => {
   return supabase
-    .channel("Bid")
+    .channel(`auction-${auctionId}`)
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "bids", filter: `item_id=eq.${id}` },
+      {
+        event: "*",
+        schema: "public",
+        table: "Auction",
+        filter: `id=eq.${auctionId}`,
+      },
       callback
     )
     .subscribe();
-}
-
-/**
- * Buys out an auction item at the buyout price.
- * @param buyOutPrice - The price to buy the item immediately.
- * @param itemId - The auction item ID.
- * @returns A success or failure message.
- */
-export const buyOutItem = async (buyOutPrice: number, itemId: string) => {
-  if (!itemId) return;
-
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-
-    const userId = user?.id;
-
-    const { error: updateError } = await supabase
-      .from("auctions")
-      .update({
-        owner: userId,
-        highestBidder: userId,
-        highestBid: buyOutPrice,
-        currentBid: buyOutPrice,
-        endTime: Date.now(),
-      })
-      .eq("id", itemId);
-
-    if (updateError) throw updateError;
-
-    return { success: true, message: "You bought this item!" };
-  } catch (error) {
-    console.error("Error during buyout:", error);
-    return { success: false, message: "Error during buyout" };
-  }
 };
 
-/**
- * Handles user leaving an auction.
- * If the highest bidder leaves, the auction resets.
- * Otherwise, the remaining user wins.
- * @param itemId - The auction item ID.
- * @returns A success or failure message.
- */
-export const leaveAuction = async (itemId: string) => {
-  if (!itemId) return;
-
-  try {
-    const { data: auction, error: fetchError } = await supabase
-      .from("Auction")
-      .select("highestBidder")
-      .eq("id", itemId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    if (!auction.highestBidder) {
-      await supabase
-        .from("Auction")
-        .update({ highestBid: 0, highestBidder: null })
-        .eq("id", itemId);
-
-      return { success: true, message: "Auction reset due to both users leaving." };
-    }
-
-    await supabase
-      .from("Auction")
-      .update({ owner: auction.highestBidder, endTime: Date.now() })
-      .eq("id", itemId);
-
-    return { success: true, message: "Other user left, you won the auction!" };
-  } catch (error) {
-    console.error("Error during leave:", error);
-    return { success: false, message: "Error during leave" };
-  }
+export const subscribeToBidUpdates = (
+  auctionId: string,
+  callback: (payload: { new: any; old: any }) => void
+) => {
+  return supabase
+    .channel(`bid-${auctionId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "Bid",
+        filter: `auction_id=eq.${auctionId}`,
+      },
+      callback
+    )
+    .subscribe();
 };
 
-// Exporting functions for external use
-export {
-  placeBid,
-  fetchAuctionData,
-  subscribeToAuctionUpdates,
-  fetchHighestBidData,
-  subscribeToBidUpdates,
-  fetchHighestBidder,
+const getSession = async (): Promise<Session | null> => {
+  const cookie = cookies().get(config.sessionCookieName);
+  if (!cookie) return null;
+  try {
+    const decoded = decode(cookie.value) as User;
+    return {
+      user: decoded,
+      expires_in: 3600,
+      refresh_token: "",
+      access_token: "",
+      token_type: "",
+    };
+  } catch (error) {
+    console.error("Error decoding session token:", error);
+    return null;
+  }
 };
