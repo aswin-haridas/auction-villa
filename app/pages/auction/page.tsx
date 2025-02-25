@@ -3,7 +3,7 @@ import Link from "next/link";
 import Card from "../components/card";
 import { anton } from "../font/fonts";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { supabase } from "@/app/services/client";
+import { supabase } from "@/app/utils/client";
 import React from "react";
 import Header from "../components/header";
 
@@ -35,7 +35,8 @@ function Auction() {
   const auctionList = useMemo(() => {
     return items.map((item) => (
       <Link key={item.id} href={`/bidding/${item.id}`}>
-        <Card image={item.image[0]} name={item.name} category={item.category} />
+        {/* Check if image array is not empty before accessing [0] */}
+        <Card image={item.image?.[0] || ''} name={item.name} category={item.category} /> 
       </Link>
     ));
   }, [items]);
@@ -47,13 +48,9 @@ function Auction() {
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Live auctions
         </p>
-<<<<<<< HEAD
-        <div className="grid grid-cols-5 pt-8">{auctionList}</div>
-=======
         <div className="grid grid-cols-5 pt-8">
           {auctionList}
         </div>
->>>>>>> 54ab8cb8151d5335a26fe8e26def35ab78a97777
       </div>
     </>
   );

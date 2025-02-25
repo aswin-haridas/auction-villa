@@ -26,6 +26,7 @@ interface AuctionData {
   highestBidder: string;
   buyOutPrice: number;
   image: string[];
+  category: string;
 }
 
 interface Bid {
@@ -35,6 +36,8 @@ interface Bid {
   timestamp: string;
   auction_id: string;
 }
+
+
 
 export default function Bidding() {
   const { id } = useParams<{ id: string }>();
@@ -139,7 +142,12 @@ export default function Bidding() {
     };
   }, [id]);
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        Loading...
+      </div>
+    );
   if (!auction) return <div className="p-4">No auction data found.</div>;
 
   return (
@@ -175,43 +183,54 @@ export default function Bidding() {
           </div>
         </div>
 
-        <div className="w-6/12 flex flex-col justify-between">
-          <div>
-          <h1 className={`text-5xl text-[#FEF9E1] mb-8 ${playfair.className}`}>
+        <div className="w-6/12 flex flex-col text-white">
+          <h1
+            className={`text-5xl text-[#FEF9E1] mb-6 ${playfair.className} font-bold`}
+          >
             {auction.name}
           </h1>
-          <p className="text-green-500">
-            Starting Price:{" "}
-            <span className="font-semibold">{auction.price}u</span>
-          </p>
-          <p>
-            End Time:{" "}
-            <span className="font-semibold">
-              {new Date(auction.endTime).toLocaleString()}
-            </span>
-          </p>
-          <p>
-            Owner: <span className="font-semibold">{auction.owner}</span>
-          </p>
-          <div>
-            <h2 className="text-red-800 underline text-lg font-semibold">
+          <div className="flex mb-8">
+            <div className="w-1/2">
+              <p className="text-[#878787] text-lg mb-2">
+                Owner: <span className="font-semibold">{auction.owner}</span>
+              </p>
+              <p className="text-[#878787] text-lg mb-2">
+                Category: <span>{auction.category}</span>
+              </p>
+
+              <p className="text-[#878787] text-lg mb-2">
+                Ends in:{" "}
+                <span className="font-semibold">
+                  {new Date(auction.endTime).toLocaleString()}
+                </span>
+              </p>
+            </div>
+            <div className="w-1/2">
+              <p className="text-[#878787] text-lg mb-2">
+                Starting Price:{" "}
+                <span className="text-green-800 font-semibold">
+                  {auction.price}u
+                </span>
+              </p>
+              <p className="text-[#878787] text-lg">
+                Highest Bidder:{" "}
+                <span className="font-semibold text-[#FEF9E1]">
+                  {highestBidder}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className=" mb-6">
+            <h2 className="text-[#ba3737] text-xl font-semibold mb-2">
               Current Bid
             </h2>
-            <h1 className="text-4xl font-bold">{currentBid}u</h1>
+            <h1 className="text-5xl font-bold">{currentBid}u</h1>
           </div>
-          <p>
-            Highest Bid: <span className="font-semibold">{highestBid}u</span>
-          </p>
-          <p>
-            Highest Bidder:{" "}
-            <span className="font-semibold">{highestBidder}</span>
-          </p>
-          </div>
-          <BidHistory bids={bids} />
           <BiddingControls
             buyOutPrice={auction.buyOutPrice}
             itemId={auction.id}
           />
+          <BidHistory bids={bids} />
         </div>
       </div>
     </>

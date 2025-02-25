@@ -1,3 +1,4 @@
+<<<<<<< HEAD:app/services/auction.ts
 import { supabase } from "./client";
 
 // Buy out item
@@ -208,3 +209,25 @@ export const subscribeToBidUpdates = (
     )
     .subscribe();
 };
+=======
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "@/types_db";
+
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export const createAuction = async (auctionData: any) => {
+  const { data, error } = await supabase
+    .from("Auction")
+    .insert([auctionData]);
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+// ... rest of your auction.ts file ...
+>>>>>>> 54ab8cb8151d5335a26fe8e26def35ab78a97777:app/utils/auction.ts
