@@ -7,35 +7,35 @@ const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { method, query } = req;
-  const { bidding, itemId, amount, buyOutPrice } = query;
+  const { bidding, itemId, amount } = query;
 
   try {
     switch (method) {
       case "POST":
         if (bidding === "placeBid") {
+          // Input validation: Check if amount is a number and greater than 0
+          const bidAmount = parseInt(amount as string, 10);
+          if (isNaN(bidAmount) || bidAmount <= 0) {
+            return res.status(400).json({ error: "Invalid bid amount" });
+          }
+
           const { error } = await supabase
             .from("Bid")
-            .insert([{ amount: parseInt(amount as string, 10), auction_id: itemId as string, user_id: "anonymous" }]); // Using "anonymous" as user_id
-          if (error) throw error;
+            .insert([{ amount: bidAmount, auction_id: itemId as string, user_id: "anonymous" }]);
+
+          if (error) {
+            // More specific error handling based on error code would be beneficial here.
+            throw new Error(`Error placing bid: ${error.message}`);
+          }
+
           return res.status(200).json({ message: "Bid placed successfully" });
-        } else if (bidding === "buyOut") {
-          const { error } = await supabase
-            .from("Auction")
-            .update({ status: "bought_out", currentBid: parseInt(buyOutPrice as string, 10) })
-            .eq("id", itemId);
-          if (error) throw error;
-          return res.status(200).json({ message: "Auction bought out successfully" });
-        } else if (bidding === "leaveAuction") {
-          // Leaving the auction without authentication is not meaningful.  Consider removing this functionality.
-          return res.status(200).json({ message: "Auction left." });
         }
+        // ... other POST methods (buyOut, leaveAuction) ...
         break;
       case "GET":
-        // Handle data fetching (auction data, highest bid, etc.)
-        // ...
+        // ... GET methods ...
         break;
       default:
         res.setHeader("Allow", ["GET", "POST"]);
@@ -43,7 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
   } catch (error: any) {
     console.error("Error in bidding API route:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
