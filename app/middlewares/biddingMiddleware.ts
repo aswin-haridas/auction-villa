@@ -1,22 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types_db";
-import { Session, User } from "@supabase/supabase-js";
-import { decode } from "jsonwebtoken";
-import { cookies } from "next/headers";
 
-interface SupabaseConfig {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
-  sessionCookieName: string;
-}
-
-const config: SupabaseConfig = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  sessionCookieName: "sb:token", // Default cookie name, can be overridden
-};
-
-const supabase = createClient<Database>(config.supabaseUrl, config.supabaseAnonKey);
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export const fetchAuctionData = async (id: string) => {
   const { data, error } = await supabase
@@ -58,50 +46,6 @@ export const fetchHighestBidder = async (id: string) => {
   return {  userData, error: userError };
 };
 
-export const placeBid = async (amount: number, auctionId: string) => {
-  const session = await getSession();
-  if (!session?.user) {
-    throw new Error("You must be logged in to place a bid.");
-  }
-  const { data, error } = await supabase
-    .from("Bid")
-    .insert([{ amount, auction_id: auctionId, user_id: session.user.id }]);
-  if (error) {
-    throw new Error(`Error placing bid: ${error.message}`);
-  }
-  return { data, error };
-};
-
-export const buyOutItem = async (buyOutPrice: number, auctionId: string) => {
-  const session = await getSession();
-  if (!session?.user) {
-    throw new Error("You must be logged in to buy out an item.");
-  }
-  const { data, error } = await supabase
-    .from("Auction")
-    .update({ status: "bought_out", currentBid: buyOutPrice })
-    .eq("id", auctionId);
-  if (error) {
-    throw new Error(`Error buying out item: ${error.message}`);
-  }
-  return { data, error };
-};
-
-export const leaveAuction = async (auctionId: string, userId: string | null) => {
-  if (!userId) {
-    throw new Error("You must be logged in to leave an auction.");
-  }
-  const { data, error } = await supabase
-    .from("Bid")
-    .delete()
-    .eq("auction_id", auctionId)
-    .eq("user_id", userId);
-  if (error) {
-    throw new Error(`Error leaving auction: ${error.message}`);
-  }
-  return { data, error };
-};
-
 export const subscribeToAuctionUpdates = (
   auctionId: string,
   callback: (payload: { new: any; old: any }) => void
@@ -138,22 +82,4 @@ export const subscribeToBidUpdates = (
       callback
     )
     .subscribe();
-};
-
-const getSession = async (): Promise<Session | null> => {
-  const cookie = cookies().get(config.sessionCookieName);
-  if (!cookie) return null;
-  try {
-    const decoded = decode(cookie.value) as User;
-    return {
-      user: decoded,
-      expires_in: 3600,
-      refresh_token: "",
-      access_token: "",
-      token_type: "",
-    };
-  } catch (error) {
-    console.error("Error decoding session token:", error);
-    return null;
-  }
 };
