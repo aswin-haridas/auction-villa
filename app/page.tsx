@@ -1,18 +1,60 @@
+"use client";
+import Link from "next/link";
+import Card from "./components/card";
+import { anton } from "./font/fonts";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { supabase } from "@/app/services/client";
+import React from "react";
 import Header from "./components/header";
 
-// View Owned Paintings: Display all paintings user has won or bought.
-// View Painting Details: Show name, price, artist, and past auction details.
-// Sell Item (Move to Trade Page): Option to list an item for sale/trade.
-// Start New Auction: If a user wants to re-auction a painting they own.
+interface Paintings {
+  id: number;
+  image: string[];
+  name: string;
+  price: number;
+  category: string;
+}
 
+function Auction() {
+  const [paintings, setPaintings] = useState<Paintings[]>([]);
 
-export default function Home() {
-  
+  const fetchPaintings = useCallback(async () => {
+    const { data, error } = await supabase.from("Painting").select("*");
+
+    if (error) {
+      console.error("Error fetching paintings:", error);
+    } else {
+      setPaintings(data as Paintings[]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPaintings();
+  }, [fetchPaintings]);
+
+  const paintingList = useMemo(() => {
+    return paintings.map((painting) => (
+      <Link key={painting.id} href={`/atelier/${painting.id}`}>
+        <Card
+          image={painting.image[0]}
+          name={painting.name}
+          category={painting.category}
+        />
+      </Link>
+    ));
+  }, [paintings]);
 
   return (
     <>
       <Header />
-      <h1>no paintings here </h1>
+      <div className="px-12">
+        <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
+          Paintings
+        </p>
+        <div className="grid grid-cols-5 pt-8">{paintingList}</div>
+      </div>
     </>
   );
 }
+
+export default Auction;

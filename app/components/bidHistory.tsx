@@ -15,7 +15,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids }) => {
   const userColors: string[] = ["#d062fc", "#8efc62"];
 
   return (
-    <div className="flex flex-col justify-start items-start">
+    <div className="flex flex-col justify-start items-start pt-8">
       <div className="overflow-auto">
         {bids.length === 0 ? (
           <p className="text-gray-400">No bids yet</p>

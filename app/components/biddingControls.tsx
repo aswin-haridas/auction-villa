@@ -1,12 +1,8 @@
 import React from "react";
-import {
-  buyOutItem,
-  leaveAuction,
-  placeBid,
-} from "../middlewares/biddingMiddleware";
-import { supabase } from "../utils/client";
+import { buyOutItem, leaveAuction, placeBid } from "../services/auction";
+import { LogOut } from "lucide-react";
 
-const biddingValues = [100, 500, 1000];
+const biddingValues = [100, 500, 1000, 5000];
 
 interface BiddingControlsProps {
   buyOutPrice: number;
@@ -47,8 +43,7 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
 
   return (
     <div>
-      {/* Bid Amount Selection */}
-      <div className="flex space-x-4 mr-28">
+      <div className="flex space-x-4">
         {biddingValues.map((value) => (
           <div
             key={value}
@@ -60,6 +55,9 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
             {value}u
           </div>
         ))}
+      </div>
+
+      <div className="flex space-x-4 mt-6">
         <input
           onChange={(event) => {
             const inputValue = parseInt(event.target.value, 10);
@@ -71,14 +69,9 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
           placeholder="Custom Amount"
           className="border-2 border-red-800 placeholder-gray-500 font-bold px-2 bg-transparent text-white h-10 rounded-sm"
         />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex space-x-4 mr-28 mt-6">
-        {/* Place Bid Button */}
         <div
           onClick={!isAnimating ? handlePlaceBid : undefined}
-          className={`relative flex flex-col text-center justify-center border-2 border-red-800 font-bold w-60 h-10 rounded-sm ${
+          className={`relative flex flex-col text-center justify-center border-2 border-red-800 font-bold w-60 h-10  ${
             isAnimating
               ? "bg-transparent cursor-not-allowed"
               : "bg-red-800 cursor-pointer"
@@ -88,20 +81,18 @@ const BiddingControls = ({ buyOutPrice, itemId }: BiddingControlsProps) => {
             {countdown ? `Wait ${countdown} sec` : "Place Bid"}
           </div>
         </div>
-        {/* Buyout Button */}
         <div
           onClick={handleBuyout}
-          className="cursor-pointer group relative flex flex-col text-center justify-center font-bold border-2 border-red-800 w-60 h-10 text-cyan-300 rounded-sm overflow-hidden"
+          className="cursor-pointer group relative flex flex-col text-center justify-center font-bold border-2 border-red-800 w-60 h-10 text-cyan-300 "
         >
           <div className="relative z-10">Buy Out: {buyOutPrice}u</div>
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[linear-gradient(45deg,#ffffff33_25%,transparent_25%,transparent_50%,#ffffff33_50%,#ffffff33_75%,transparent_75%,transparent_100%)] bg-[length:40px_40px]"></div>
         </div>
-        {/* Leave Auction Button */}
         <div
           onClick={handleLeave}
-          className="cursor-pointer flex flex-col text-center justify-center font-bold border-2 border-red-800 w-48 h-10 text-gray-500 rounded-sm hover:text-gray-400"
+          className="cursor-pointer flex flex-col justify-center items-center font-bold border-2 border-red-800 w-14 h-10 text-gray-500 hover:text-gray-400"
         >
-          Leave
+          <LogOut className="w-6 h-6" />
         </div>
       </div>
     </div>
