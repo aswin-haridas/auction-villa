@@ -1,22 +1,20 @@
 import React from "react";
+import { playfair } from "../font/fonts";
 
 interface CardProps {
   image: string;
   name: string;
-  price: number;
+  category: string;
 }
 
-const Card = ({ image, name, price }: CardProps) => (
-  <div className="relative  w-[250px] cursor-pointer overflow-hidden hover:border-2 hover:border-[#A7A7A7]">
+const Card = ({ image, name, category }: CardProps) => (
+  <div className="relative w-[250px] cursor-pointer hover:underline hover:underline-offset-2">
     <div className="w-full mb-2">
       <img src={image} alt={name} className="w-full block object-cover" />
     </div>
-    <div className="p-2">
-      <div className="text-base mb-1 text-[#FAF9F6]">{name}</div>
-      <div className="flex justify-between items-center mt-1">
-        <div className="text-base font-bold text-[#BA3737]">{price}u</div>
-        <div className="text-sm text-[#FAF9F6]">33:44</div>
-      </div>
+    <div>
+      <div className={`text-lg text-[#FAF9F6] ${playfair.className}`}>{name}</div>
+      <div className="text-sm text-[#878787]">{category}</div>
     </div>
   </div>
 );

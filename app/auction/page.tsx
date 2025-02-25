@@ -12,6 +12,7 @@ interface AuctionItem {
   image: string[];
   name: string;
   price: number;
+  category: string;
 }
 
 function Auction() {
@@ -34,7 +35,7 @@ function Auction() {
   const auctionList = useMemo(() => {
     return items.map((item) => (
       <Link key={item.id} href={`/bidding/${item.id}`}>
-        <Card image={item.image[0]} name={item.name} price={item.price} />
+        <Card image={item.image[0]} name={item.name} category={item.category} />
       </Link>
     ));
   }, [items]);
@@ -42,11 +43,11 @@ function Auction() {
   return (
     <>
       <Header />
-      <div className="p-4 flex flex-col items-center justify-center">
-        <p className={`${anton.className} text-gray-300 text-3xl p-6`}>
+      <div className="px-12">
+        <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Live auctions
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
+        <div className="grid grid-cols-5 pt-8">
           {auctionList}
         </div>
       </div>

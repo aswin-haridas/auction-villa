@@ -1,7 +1,7 @@
 # colors
 
-white = #ffffff
-light gray = #878787
-dark gray = #2d2d2d
-red = #ba3737
-text = #FEF9E1
+light gray = #878787 (less important text)
+dark gray = #171717 (mostly background) 
+red = #ba3737 (accent)
+cream = #FEF9E1 (accent text)
+white = #ffffff (mostly text) 
