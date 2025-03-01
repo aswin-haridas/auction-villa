@@ -1,23 +1,26 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useCallback } from "react";
-import { supabase } from './client';
+import { supabase } from "./client";
 
-export const checkAuth = async (username: string, password: string): Promise<boolean> => {
+export const checkAuth = async (
+  username: string,
+  password: string
+): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from('User')
-      .select('username')
-      .eq('username', username)
-      .eq('password', password)
+      .from("User")
+      .select("username")
+      .eq("username", username)
+      .eq("password", password)
       .single();
 
     if (error) throw error;
 
     setUsernameInSession(username);
     return true;
-  } catch (error) {
-    throw new Error('Invalid username or password');
+  } catch {
+    throw new Error("Invalid username or password");
   }
 };
 
@@ -32,9 +35,9 @@ interface SessionData {
 const getSessionData = (): SessionData | null => {
   try {
     const sessionData = sessionStorage.getItem(SESSION_KEY);
-    return sessionData ? (JSON.parse(sessionData) as SessionData) : null;
-  } catch (error) {
-    console.error("Error parsing session data:", error);
+    return sessionData ? JSON.parse(sessionData) : null;
+  } catch {
+    console.error("Error parsing session data");
     return null;
   }
 };
@@ -59,13 +62,10 @@ export const getUsername = (): string | null => {
 };
 
 export const setUsernameInSession = (username: string): void => {
-  if (!username) return;
-  setSessionData(username);
+  if (username) setSessionData(username);
 };
 
-export const checkUsernameExists = (): string => {
-  return getUsername() || "###";
-};
+export const checkUsernameExists = (): string => getUsername() || "###";
 
 export const useValidateSession = (): void => {
   const router = useRouter();

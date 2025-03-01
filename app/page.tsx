@@ -34,9 +34,9 @@ function Auction() {
 
   const paintingList = useMemo(() => {
     return paintings.map((painting) => (
-      <Link key={painting.id} href={`/atelier/${painting.id}`}>
+      <Link key={painting.id} href={`/bidding/${painting.id}`}>
         <Card
-          image={painting.image[0]}
+          image={painting.image && painting.image[0] ? painting.image[0] : ""}
           name={painting.name}
           category={painting.category}
         />

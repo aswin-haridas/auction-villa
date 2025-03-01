@@ -47,13 +47,7 @@ function Auction() {
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Live auctions
         </p>
-<<<<<<< HEAD
         <div className="grid grid-cols-5 pt-8">{auctionList}</div>
-=======
-        <div className="grid grid-cols-5 pt-8">
-          {auctionList}
-        </div>
->>>>>>> 54ab8cb8151d5335a26fe8e26def35ab78a97777
       </div>
     </>
   );

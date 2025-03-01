@@ -1,120 +1,109 @@
-<<<<<<< HEAD:app/services/auction.ts
 import { supabase } from "./client";
 
-// Buy out item
-export const buyOutItem = async (
-  buyOutPrice: number,
-  itemId: string
-): Promise<void> => {
+// Types
+interface User {
+  username: string;
+  balance: number;
+}
+
+interface Auction {
+  id: string;
+  name: string;
+  price: number;
+  endTime: number;
+  owner: string;
+  highestBid: number;
+  highestBidder?: string;
+  buyOutPrice: number;
+  image: string[];
+  category: string;
+  status: string;
+  buyer?: string;
+}
+
+interface Bid {
+  bid_id: string;
+  user_id: string;
+  amount: number;
+  timestamp: string;
+  auction_id: string;
+}
+
+// Utility function to get authenticated username
+const getAuthenticatedUsername = (): string => {
   const username = sessionStorage.getItem("username");
   if (!username) throw new Error("User not authenticated");
-
-  const { data, error } = await supabase
-    .from("User")
-    .select("balance")
-    .eq("username", username)
-    .single();
-  if (error || !data) {
-    console.error("Error fetching user balance:", error);
-    return;
-  }
-
-  if (data.balance < buyOutPrice) {
-    console.error("Insufficient funds");
-    return;
-  }
-
-  const { error: updateError } = await supabase
-    .from("User")
-    .update({ balance: data.balance - buyOutPrice })
-    .eq("username", username);
-  if (updateError) {
-    console.error("Error updating user balance:", updateError);
-    return;
-  }
-
-  await supabase
-    .from("Auction")
-    .update({ status: "sold", buyer: username })
-    .eq("id", itemId);
+  return username;
 };
 
-// Leave auction
-export const leaveAuction = async (itemId: string): Promise<void> => {
-  const username = sessionStorage.getItem("username");
-  if (!username) throw new Error("User not authenticated");
-
-  await supabase
-    .from("AuctionParticipants")
-    .delete()
-    .eq("username", username)
-    .eq("auction_id", itemId);
-};
-
-// Place bid
-export const placeBid = async (
-  amount: number,
-  itemId: string
-): Promise<void> => {
-  const username = sessionStorage.getItem("username");
-  if (!username) throw new Error("User not authenticated");
-
-  const { data: auction, error: auctionError } = await supabase
-    .from("Auction")
-    .select("highestBid")
-    .eq("id", itemId)
-    .single();
-  if (auctionError || !auction) {
-    console.error("Error fetching auction:", auctionError);
-    return;
-  }
-
-  if (amount <= auction.highestBid) {
-    console.error("Bid amount must be higher than the current highest bid");
-    return;
-  }
+// Buy out an auction item
+export const buyOutItem = async (buyOutPrice: number, itemId: string): Promise<void> => {
+  const username = getAuthenticatedUsername();
 
   const { data: user, error: userError } = await supabase
     .from("User")
     .select("balance")
     .eq("username", username)
     .single();
-  if (userError || !user) {
-    console.error("Error fetching user:", userError);
-    return;
-  }
 
-  if (user.balance < amount) {
-    console.error("Insufficient funds");
-    return;
-  }
+  if (userError) throw userError;
+  if (!user) throw new Error("User not found");
+  if (user.balance < buyOutPrice) throw new Error("Insufficient funds");
 
-  const { error: bidError } = await supabase
-    .from("Bid")
-    .insert({ amount, auction_id: itemId, user_id: username });
-  if (bidError) {
-    console.error("Error placing bid:", bidError);
-    return;
-  }
+  const { error: transactionError } = await supabase.rpc("buy_out_item", {
+    p_username: username,
+    p_item_id: itemId,
+    p_buyout_price: buyOutPrice
+  });
 
-  await supabase
-    .from("Auction")
-    .update({ highestBid: amount })
-    .eq("id", itemId);
+  if (transactionError) throw transactionError;
 };
 
-// Define interfaces for auction and bid data
-interface Auction {
-  id: string;
-  highestBid: number;
-  // Add other auction fields as necessary
-}
+// Leave an auction
+export const leaveAuction = async (itemId: string): Promise<void> => {
+  const username = getAuthenticatedUsername();
 
-interface Bid {
-  user_id: string;
-  amount: number;
-  // Add other bid fields as necessary
-}
+  const { error } = await supabase
+    .from("AuctionParticipants")
+    .delete()
+    .match({ username, auction_id: itemId });
+
+  if (error) throw error;
+};
+
+// Place a bid
+export const placeBid = async (amount: number, itemId: string): Promise<void> => {
+  const username = getAuthenticatedUsername();
+
+  const { data: auction, error: auctionError } = await supabase
+    .from("Auction")
+    .select("highestBid, status")
+    .eq("id", itemId)
+    .single();
+
+  if (auctionError) throw auctionError;
+  if (!auction) throw new Error("Auction not found");
+  if (auction.status === "sold") throw new Error("Auction already sold");
+  if (amount <= auction.highestBid) throw new Error("Bid too low");
+
+  const { data: user, error: userError } = await supabase
+    .from("User")
+    .select("balance")
+    .eq("username", username)
+    .single();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("User not found");
+  if (user.balance < amount) throw new Error("Insufficient funds");
+
+  const { error: transactionError } = await supabase.rpc("place_bid", {
+    p_amount: amount,
+    p_item_id: itemId,
+    p_username: username
+  });
+
+  if (transactionError) throw transactionError;
+};
 
 // Fetch auction data
 export const fetchAuctionData = async (itemId: string): Promise<Auction> => {
@@ -124,15 +113,13 @@ export const fetchAuctionData = async (itemId: string): Promise<Auction> => {
     .eq("id", itemId)
     .single();
 
-  if (error) {
-    console.error("Error fetching auction data:", error);
-    throw error;
-  }
+  if (error) throw error;
+  if (!data) throw new Error("Auction not found");
 
   return data as Auction;
 };
 
-// Fetch highest bid data
+// Fetch highest bid
 export const fetchHighestBidData = async (itemId: string): Promise<number> => {
   const { data, error } = await supabase
     .from("Auction")
@@ -140,12 +127,10 @@ export const fetchHighestBidData = async (itemId: string): Promise<number> => {
     .eq("id", itemId)
     .single();
 
-  if (error) {
-    console.error("Error fetching highest bid data:", error);
-    throw error;
-  }
+  if (error) throw error;
+  if (!data) throw new Error("Auction not found");
 
-  return data.highestBid;
+  return data.highestBid ?? 0;
 };
 
 // Fetch highest bidder
@@ -158,76 +143,43 @@ export const fetchHighestBidder = async (itemId: string): Promise<string> => {
     .limit(1)
     .single();
 
-  if (error) {
-    console.error("Error fetching highest bidder:", error);
-    throw error;
-  }
+  if (error) throw error;
+  if (!data) return "";
 
   return data.user_id;
 };
 
-// Subscribe to auction updates
+// Subscriptions
 export const subscribeToAuctionUpdates = (
   itemId: string,
   callback: (data: Auction) => void
-) => {
-  return supabase
-    .channel(`public:Auction:id=eq.${itemId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "Auction",
-        filter: `id=eq.${itemId}`,
-      },
-      (payload: { new: Auction }) => {
-        callback(payload.new as Auction);
-      }
-    )
-    .subscribe();
-};
+) => supabase
+  .channel(`auction:${itemId}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "UPDATE",
+      schema: "public",
+      table: "Auction",
+      filter: `id=eq.${itemId}`,
+    },
+    (payload) => callback(payload.new as Auction)
+  )
+  .subscribe();
 
-// Subscribe to bid updates
 export const subscribeToBidUpdates = (
   itemId: string,
   callback: (data: Bid) => void
-) => {
-  return supabase
-    .channel(`public:Bid:auction_id=eq.${itemId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "Bid",
-        filter: `auction_id=eq.${itemId}`,
-      },
-      (payload: { new: Bid }) => {
-        callback(payload.new as Bid);
-      }
-    )
-    .subscribe();
-};
-=======
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types_db";
-
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export const createAuction = async (auctionData: any) => {
-  const { data, error } = await supabase
-    .from("Auction")
-    .insert([auctionData]);
-
-  if (error) {
-    throw error;
-  }
-  return data;
-};
-
-// ... rest of your auction.ts file ...
->>>>>>> 54ab8cb8151d5335a26fe8e26def35ab78a97777:app/utils/auction.ts
+) => supabase
+  .channel(`bids:${itemId}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "Bid",
+      filter: `auction_id=eq.${itemId}`,
+    },
+    (payload) => callback(payload.new as Bid)
+  )
+  .subscribe();
