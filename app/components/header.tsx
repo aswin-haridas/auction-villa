@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { checkUsernameExists, useSignOut } from "../services/session";
+import { useSignOut } from "../services/session";
 
 const symbols = ["𖤐", "𖤍", "⁶⁶⁶", "🕇"];
 
@@ -23,14 +23,6 @@ const Header: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    try {
-      setUsername(checkUsernameExists());
-    } catch (error) {
-      console.error(error);
-    }
-  }, [username]);
 
   return (
     <div className="w-full h-14 flex items-center pt-4 px-12 ">

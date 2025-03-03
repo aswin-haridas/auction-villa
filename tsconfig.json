@@ -29,6 +29,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/bidding/[id]/page.tsx"
-  ],
+, "app/testing/page.jsx"  ],
   "exclude": ["node_modules"]
 }

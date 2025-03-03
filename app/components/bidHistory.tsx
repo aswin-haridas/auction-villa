@@ -10,12 +10,12 @@ interface BidHistoryProps {
     bids: Bid[];
 }
 
-const BidHistory: React.FC<BidHistoryProps> = ({ bids}) => {
-    const userColors: string[] = ["#d062fc", "#8efc62"];
+const BidHistory: React.FC<BidHistoryProps> = ({ bids }) => {
+    const userColors: string[] = ["#1abc9c", "#e67e22"];
 
     return (
         <div className="flex flex-col justify-start items-start mt-8">
-            <div className="w-full overflow-y-auto">
+            <div className="w-full h-64 overflow-auto"> {/* Added fixed height and overflow */}
                 {bids.length === 0 ? (
                     <p className="text-gray-400">No bids yet</p>
                 ) : (

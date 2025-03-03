@@ -3,24 +3,25 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
-import { playfair } from "@/app/font/fonts";
-import { anton } from "@/app/font/fonts"; // Added missing import
+import { playfair, anton } from "@/app/font/fonts";
 import Header from "@/app/components/header";
-import BidHistory from "@/app/components/bidHistory";
+import BidHistory from "@/app/components/bidhistory";
+import { supabase } from "@/app/services/client";
 
 // Interfaces
 interface AuctionData {
   id: string;
   name: string;
   price: number;
-  endTime: number;
-  owner: string;
-  currentBid: number;
-  highestBid: number;
-  highestBidder: string;
-  buyOutPrice: number;
+  end_time: string; // Changed to string to match database format
+  owner: string | null;
+  currentBid: number | null;
+  highest_bid: number | null; // Changed to match database column name
+  highest_bidder: string | null; // Changed to match database column name
+  buyout_price: number; // Changed to match database column name
   image: string[];
   category: string;
+  status: string;
 }
 
 interface Bid {
@@ -48,158 +49,162 @@ export default function Bidding() {
     "User" + Math.floor(Math.random() * 1000)
   );
 
-  // Generate fake auction data
+  // Fetch auction data from Supabase
   useEffect(() => {
-    const fetchAuctionData = () => {
-      // Simulating API response delay
-      setTimeout(() => {
-        // Fake auction data
-        const fakeAuction: AuctionData = {
-          id: id || "auction-123",
-          name: "Vintage ",
-          price: 1000,
-          endTime: Date.now() + 86400000, // 24 hours from now
-          owner: "LuxuryCollector42",
-          currentBid: 2500,
-          highestBid: 2500,
-          highestBidder: "ElegantBidder89",
-          buyOutPrice: 10000,
-          image: [
-            "https://iili.io/32GVWwG.jpg",
-            "https://iili.io/32GVXtf.jpg",
-            "https://iili.io/32GVM9n.jpg",
-            "https://iili.io/32GVVus.jpg",
-            "https://iili.io/32GVwMl.jpg",
-          ],
-          category: "Luxury Watches",
+    const fetchAuctionData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch auction details
+        const { data: auctionData, error: auctionError } = await supabase
+          .from("Auction")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (auctionError) {
+          throw new Error(`Error fetching auction: ${auctionError.message}`);
+        }
+
+        if (!auctionData) {
+          throw new Error("Auction not found");
+        }
+
+        // Since we're not implementing a separate bids table yet, we'll initialize with empty bids
+        // You might want to add a bids table and fetch related bids here
+        const initialBids: Bid[] = [];
+
+        // Map the database fields to our interface
+        const mappedAuction: AuctionData = {
+          id: auctionData.id,
+          name: auctionData.name,
+          price: auctionData.price,
+          end_time: auctionData.end_time,
+          owner: auctionData.owner || "Unknown",
+          currentBid: auctionData.highest_bid || auctionData.price,
+          highest_bid: auctionData.highest_bid || auctionData.price,
+          highest_bidder: auctionData.highest_bidder || "None yet",
+          buyout_price: auctionData.buyout_price,
+          image: auctionData.image || [],
+          category: auctionData.category,
+          status: auctionData.status,
         };
 
-        // Fake bid history
-        const fakeBids: Bid[] = [
-          {
-            bid_id: "bid-001",
-            user_id: "ClassicCollector23",
-            amount: 1200,
-            timestamp: new Date(Date.now() - 3600000 * 5).toISOString(), // 5 hours ago
-            auction_id: id || "auction-123",
-          },
-          {
-            bid_id: "bid-002",
-            user_id: "WatchEnthusiast77",
-            amount: 1800,
-            timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), // 3 hours ago
-            auction_id: id || "auction-123",
-          },
-          {
-            bid_id: "bid-003",
-            user_id: "ElegantBidder89",
-            amount: 2500,
-            timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-            auction_id: id || "auction-123",
-          },
-          {
-            bid_id: "bid-004",
-            user_id: "LuxuryCollector42",
-            amount: 2500,
-            timestamp: new Date().toISOString(),
-            auction_id: id || "auction-123",
-          },
-          {
-            bid_id: "bid-005",
-            user_id: "ElegantBidder89",
-            amount: 5000,
-            timestamp: new Date().toISOString(),
-            auction_id: id || "auction-123",
-          },
-        ];
-
-        setAuction(fakeAuction);
-        setBids(fakeBids);
-        setHighestBid(fakeAuction.highestBid);
-        setHighestBidder(fakeAuction.highestBidder);
-        setCurrentBid(fakeAuction.currentBid);
+        setAuction(mappedAuction);
+        setBids(initialBids);
+        setHighestBid(mappedAuction.highest_bid || 0);
+        setHighestBidder(mappedAuction.highest_bidder || "");
+        setCurrentBid(mappedAuction.currentBid || 0);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError(err instanceof Error ? err.message : "Failed to load auction data");
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
-    fetchAuctionData();
+    if (id) {
+      fetchAuctionData();
+    }
   }, [id]);
 
   // Handle placing a bid
-  const handlePlaceBid = () => {
+  const handlePlaceBid = async () => {
     setLoading(true);
     setError(null);
 
-    // Get bid amount (either from input or selected value)
     const amount = selectedValue || Number(bidAmount);
 
-    // Validate bid amount
     if (!amount || amount <= currentBid) {
       setError("Bid must be higher than current bid");
       setLoading(false);
       return;
     }
 
-    // Simulate API request delay
-    setTimeout(() => {
-      // Create new bid
+    try {
+      // Update auction with new highest bid
+      const { error: updateError } = await supabase
+        .from("Auction")
+        .update({
+          highest_bid: amount,
+          highest_bidder: currentUser,
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        throw new Error(`Error placing bid: ${updateError.message}`);
+      }
+
+      // Create new bid record (assuming you might add a bids table later)
       const newBid: Bid = {
         bid_id: `bid-${Date.now()}`,
         user_id: currentUser,
         amount: amount,
         timestamp: new Date().toISOString(),
-        auction_id: id || "auction-123",
+        auction_id: id || "",
       };
 
-      // Update state
       setBids([newBid, ...bids]);
       setCurrentBid(amount);
       setHighestBid(amount);
       setHighestBidder(currentUser);
-
-      // Reset form
       setBidAmount("");
       setSelectedValue(null);
+    } catch (err) {
+      console.error("Bid error:", err);
+      setError(err instanceof Error ? err.message : "Failed to place bid");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   // Handle buy out
-  const handleBuyOut = () => {
-    if (loading) return;
+  const handleBuyOut = async () => {
+    if (loading || !auction) return;
 
     setLoading(true);
 
-    // Simulate API request delay
-    setTimeout(() => {
-      // Create buy out bid
+    try {
+      const { error: updateError } = await supabase
+        .from("Auction")
+        .update({
+          highest_bid: auction.buyout_price,
+          highest_bidder: currentUser,
+          status: "completed",
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        throw new Error(`Error processing buyout: ${updateError.message}`);
+      }
+
       const buyOutBid: Bid = {
         bid_id: `bid-buyout-${Date.now()}`,
         user_id: currentUser,
-        amount: auction?.buyOutPrice || 0,
+        amount: auction.buyout_price,
         timestamp: new Date().toISOString(),
-        auction_id: id || "auction-123",
+        auction_id: id || "",
       };
 
-      // Update state
       setBids([buyOutBid, ...bids]);
-      setCurrentBid(auction?.buyOutPrice || 0);
-      setHighestBid(auction?.buyOutPrice || 0);
+      setCurrentBid(auction.buyout_price);
+      setHighestBid(auction.buyout_price);
       setHighestBidder(currentUser);
-
-      // Show success message
       setError("Congratulations! You've successfully bought this item!");
+    } catch (err) {
+      console.error("Buyout error:", err);
+      setError(err instanceof Error ? err.message : "Failed to process buyout");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   // Handle leaving the auction
   const handleLeave = () => {
-    // Normally would redirect to another page
     alert("Leaving auction page");
   };
 
-  if (!auction) {
+  if (loading) {
     return (
       <div className="p-4 flex items-center justify-center h-screen">
         <div className="text-white text-xl">Loading auction data...</div>
@@ -207,13 +212,18 @@ export default function Bidding() {
     );
   }
 
+  if (!auction) {
+    return (
+      <div className="p-4 flex items-center justify-center h-screen">
+        <div className="text-white text-xl">Auction not found</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Header />
-      <div className="px-12 min-h-screen">
-        <p className={`${anton.className} text-[#878787] text-3xl pt-8 mb-4`}>
-          Bidding
-        </p>
+      <div className="px-12 min-h-screen mt-8">
         <div className="flex flex-col">
           <div className="flex justify-between">
             <div className="flex">
@@ -234,7 +244,7 @@ export default function Bidding() {
                 ))}
               </div>
               <Image
-                src={auction.image[currentImage]}
+                src={auction.image[currentImage] || "/placeholder.jpg"}
                 alt={`Current Image`}
                 width={500}
                 height={500}
@@ -242,7 +252,7 @@ export default function Bidding() {
                 className="object-cover h-[76vh]"
               />
             </div>
-            <div className="w-6/12 flex flex-col text-white">
+            <div className="w-6/12 flex flex-col text-white pl-8">
               <h1
                 className={`text-5xl text-[#FEF9E1] mb-6 ${playfair.className} font-bold`}
               >
@@ -260,7 +270,7 @@ export default function Bidding() {
                   <p className="text-[#878787] text-lg mb-2">
                     Ends in:{" "}
                     <span className="font-semibold">
-                      {new Date(auction.endTime).toLocaleString()}
+                      {new Date(auction.end_time).toLocaleString()}
                     </span>
                   </p>
                 </div>
@@ -307,9 +317,10 @@ export default function Bidding() {
                   <input
                     type="number"
                     value={bidAmount}
+                    onFocus={() => setSelectedValue(null)}
                     onChange={(e) => setBidAmount(e.target.value)}
                     placeholder="Enter bid amount"
-                    className="text-black p-2 w-40"
+                    className="text-white bg-[#171717] p-2 w-72"
                   />
                   <button
                     onClick={!loading ? handlePlaceBid : undefined}
@@ -325,7 +336,7 @@ export default function Bidding() {
                     onClick={handleBuyOut}
                     className="cursor-pointer group relative flex flex-col text-center justify-center font-bold border-2 border-red-800 w-60 h-10 text-cyan-300"
                   >
-                    Buy Out: {auction.buyOutPrice}u
+                    Buy Out: {auction.buyout_price}u
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[linear-gradient(45deg,#ffffff33_25%,transparent_25%,transparent_50%,#ffffff33_50%,#ffffff33_75%,transparent_75%,transparent_100%)] bg-[length:40px_40px]"></div>
                   </button>
                   <button
@@ -337,7 +348,6 @@ export default function Bidding() {
                 </div>
                 {error && <div className="text-red-500 mt-2">{error}</div>}
               </div>
-
               <BidHistory bids={bids} />
             </div>
           </div>

@@ -1,96 +1,65 @@
-"use client";
-import { useRouter } from "next/navigation";
-import { useEffect, useCallback } from "react";
 import { supabase } from "./client";
+import { useRouter } from "next/router";
 
-export const checkAuth = async (
+export async function checkAuth(
   username: string,
   password: string
-): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .from("User")
-      .select("username")
-      .eq("username", username)
-      .eq("password", password)
-      .single();
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("User")
+    .select("user_id")
+    .eq("username", username)
+    .eq("password", password)
+    .single();
 
-    if (error) throw error;
-
-    setUsernameInSession(username);
-    return true;
-  } catch {
-    throw new Error("Invalid username or password");
+  if (error) {
+    console.error("Error checking user credentials:", error);
+    return false;
   }
-};
 
-const SESSION_KEY = "username";
-const EXPIRY_TIME_MS = 4 * 60 * 60 * 1000; // 4 hours
+  if (data) {
+    sessionStorage.setItem("user_id", data.user_id);
+    return true;
+  }
 
-interface SessionData {
-  username: string;
-  expiryTime: number;
+  return false;
 }
 
-const getSessionData = (): SessionData | null => {
-  try {
-    const sessionData = sessionStorage.getItem(SESSION_KEY);
-    return sessionData ? JSON.parse(sessionData) : null;
-  } catch {
-    console.error("Error parsing session data");
+export async function getUserId(): Promise<string | null> {
+  const userId = sessionStorage.getItem("user_id");
+  const router = useRouter();
+
+  if (!userId) {
+    await router.push("/auth/page.tsx");
     return null;
   }
-};
 
-const setSessionData = (username: string): void => {
-  const expiryTime = Date.now() + EXPIRY_TIME_MS;
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username, expiryTime }));
-};
+  return userId;
+}
 
-const clearSession = (): void => {
-  sessionStorage.removeItem(SESSION_KEY);
-};
+export async function getUsername(): Promise<string | null> {
+  const userId = sessionStorage.getItem("user_id");
 
-const isSessionValid = (): boolean => {
-  const sessionData = getSessionData();
-  return !!sessionData && Date.now() < sessionData.expiryTime;
-};
+  if (!userId) {
+    return null;
+  }
 
-export const getUsername = (): string | null => {
-  const sessionData = getSessionData();
-  return sessionData?.username || null;
-};
+  const { data, error } = await supabase
+    .from("User")
+    .select("username")
+    .eq("user_id", userId)
+    .single();
 
-export const setUsernameInSession = (username: string): void => {
-  if (username) setSessionData(username);
-};
+  if (error) {
+    console.error("Error fetching username:", error);
+    return null;
+  }
 
-export const checkUsernameExists = (): string => getUsername() || "###";
+  return data ? data.username : null;
+}
 
-export const useValidateSession = (): void => {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isSessionValid()) {
-      clearSession();
-      router.push("/auth");
-    }
-  }, [router]);
-};
-
-export const useSignOut = (): (() => void) => {
-  const router = useRouter();
-  return useCallback(() => {
-    clearSession();
-    router.push("/auth");
-  }, [router]);
-};
-
-export default {
-  getUsername,
-  setUsernameInSession,
-  checkUsernameExists,
-  useValidateSession,
-  useSignOut,
-  checkAuth,
-};
+export function useSignOut(): () => void {
+  return () => {
+    sessionStorage.removeItem("user_id");
+  };
+}

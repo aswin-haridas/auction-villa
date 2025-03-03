@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
 import Header from "./components/header";
+import { getUserId } from "./services/session";
 
 interface Paintings {
   id: number;
@@ -17,9 +18,13 @@ interface Paintings {
 
 function Auction() {
   const [paintings, setPaintings] = useState<Paintings[]>([]);
+  const userId = getUserId();
 
   const fetchPaintings = useCallback(async () => {
-    const { data, error } = await supabase.from("Painting").select("*");
+    const { data, error } = await supabase
+      .from("Painting")
+      .select("*")
+      .eq("owner", userId);
 
     if (error) {
       console.error("Error fetching paintings:", error);

@@ -1,7 +1,7 @@
 "use client";
 import Header from "../components/header";
 import { anton } from "../font/fonts";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
 
@@ -12,7 +12,6 @@ interface TradeProps {
   buyout_price: number;
   category: string;
   end_time: string;
-  // image: string[];
   status?: string;
   highest_bid?: number;
   highest_bidder?: string;
@@ -26,9 +25,12 @@ const Trade: React.FC<TradeProps> = () => {
     category: "",
     end_time: "",
   });
-  const [images, setImages] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [imageList, setImageList] = useState<string[]>([]);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    "idle" | "uploading" | "submitting" | "success" | "error"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -41,79 +43,126 @@ const Trade: React.FC<TradeProps> = () => {
     }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    if (selectedFiles.length + imageList.length > 5) {
+      setError("You can upload a maximum of 5 images");
+      return;
+    }
+    setFiles(selectedFiles);
+  };
+
+  const handleMasterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
 
+    // Validate form fields
     const { name, price, buyout_price, category, end_time } = formData;
-
     if (!name || !price || !buyout_price || !category || !end_time) {
       setError("Please fill in all fields");
-      setIsSubmitting(false);
       return;
     }
 
-    if (images.length === 0) {
+    // If no files selected and no images uploaded
+    if (files.length === 0 && imageList.length === 0) {
       setError("Please upload at least one image");
-      setIsSubmitting(false);
       return;
     }
 
     try {
-      const uploadedImages = await Promise.all(
-        images.map(async (image) => {
-          const response = await fetch(image);
-          const blob = await response.blob();
+      // Upload images if there are new files
+      let uploadedImageUrls = [...imageList];
+      if (files.length > 0) {
+        setSubmissionStatus("uploading");
+        
+        const uploadPromises = files.map(async (file) => {
+          const fileName = `${Date.now()}_${file.name}`;
           const { data, error } = await supabase.storage
             .from("auction-images")
-            .upload(`${Date.now()}`, blob);
+            .upload(`public/${fileName}`, file);
 
-          if (error) throw error;
-          return data.path;
-        })
-      );
+          if (error) throw new Error(`Failed to upload ${file.name}: ${error.message}`);
 
-      const { error } = await supabase.from("Auction").insert([
+          const { data: publicUrlData } = supabase.storage
+            .from("auction-images")
+            .getPublicUrl(`public/${fileName}`);
+
+          return publicUrlData.publicUrl;
+        });
+
+        uploadedImageUrls = [...imageList, ...(await Promise.all(uploadPromises))];
+      }
+
+      // Store form data with image URLs
+      setSubmissionStatus("submitting");
+      const { error: insertError } = await supabase.from("Auction").insert([
         {
           name,
           price,
           buyout_price,
           category,
           end_time,
-          image: uploadedImages,
+          image: uploadedImageUrls,
           status: "active",
           highest_bid: null,
           highest_bidder: null,
         },
       ]);
 
-      if (error) throw error;
+      if (insertError) throw new Error(`Failed to save auction: ${insertError.message}`);
 
-      window.location.href = "/auction";
+      setSubmissionStatus("success");
+      setTimeout(() => {
+        window.location.href = "/auction";
+      }, 1000);
     } catch (err) {
       console.error("Error:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
-    } finally {
-      setIsSubmitting(false);
+      setSubmissionStatus("error");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const fileArray = Array.from(e.target.files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setImages((prev) => [...prev, ...fileArray].slice(0, 5)); // Limit to 5 images
+  const fetchImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Auction")
+        .select("image");
+
+      if (error) {
+        console.error("Error fetching images:", error);
+        return;
+      }
+
+      if (data) {
+        const allImages = data.flatMap((item) => item.image);
+        setImageList(allImages);
+      }
+    } catch (error) {
+      console.error("Unexpected error fetching images:", error);
     }
   };
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
 
   const removeImage = (indexToRemove: number) => {
-    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setImageList((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const getButtonText = () => {
+    switch (submissionStatus) {
+      case "uploading":
+        return "Uploading Images...";
+      case "submitting":
+        return "Creating Auction...";
+      case "success":
+        return "Success!";
+      case "error":
+        return "Error - Try Again";
+      default:
+        return "Create Auction";
+    }
   };
 
   return (
@@ -126,7 +175,7 @@ const Trade: React.FC<TradeProps> = () => {
       </div>
       <div className="flex h-[75vh] px-12 mt-8">
         {/* Form Section */}
-        <form className="space-y-4 text-white w-4/12" onSubmit={handleSubmit}>
+        <form className="space-y-4 text-white w-4/12" onSubmit={handleMasterSubmit}>
           <InputField
             type="text"
             name="name"
@@ -174,27 +223,30 @@ const Trade: React.FC<TradeProps> = () => {
             <input
               type="file"
               multiple
-              onChange={handleImageUpload}
-              className="w-full cursor-pointer"
+              onChange={handleFileSelect}
+              className="w-full cursor-pointer mb-2"
               accept="image/*"
-              disabled={images.length >= 5}
+              disabled={submissionStatus === "uploading" || imageList.length >= 5}
             />
             <p className="text-[#878787] text-sm mt-2">Upload up to 5 images</p>
           </div>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="border text-white hover:text-black hover:bg-white p-8 w-full flex items-center justify-center disabled:opacity-50"
+            disabled={submissionStatus === "uploading" || submissionStatus === "submitting"}
+            className={`border text-white hover:text-black hover:bg-white p-8 w-full flex items-center justify-center disabled:opacity-50 ${
+              submissionStatus === "success" ? "bg-green-500" : 
+              submissionStatus === "error" ? "bg-red-500" : ""
+            }`}
           >
-            {isSubmitting ? "Creating..." : "Create Auction"}{" "}
-            <ArrowRightIcon size={24} />
+            {getButtonText()}{" "}
+            {submissionStatus === "idle" && <ArrowRightIcon size={24} />}
           </button>
         </form>
 
         <div className="w-7/12 pl-8 pr-16">
-          {images.length > 0 ? (
+          {imageList.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
-              {images.map((image, index) => (
+              {imageList.map((image, index) => (
                 <ImagePreview
                   key={index}
                   image={image}

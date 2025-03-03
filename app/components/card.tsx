@@ -10,7 +10,9 @@ interface CardProps {
 const Card = ({ image, name, category }: CardProps) => (
   <div className="relative w-[250px] cursor-pointer hover:underline hover:underline-offset-2">
     <div className="w-full mb-2">
+      {image && (
       <img src={image} alt={name} className="w-full block object-cover" />
+      )}
     </div>
     <div>
       <div className={`text-lg text-[#FAF9F6] ${playfair.className}`}>{name}</div>

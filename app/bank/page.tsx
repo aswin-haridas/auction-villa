@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getUsername } from "../services/session";
+import { getUser } from "../services/session";
 import Header from "../components/header";
 import { getWalletBalance } from "../services/bank";
 const Bank: React.FC = () => {
   const [balance, setBalance] = useState<number | null>(null);
-  const username: string | null = getUsername();
+  const username: string | null = getUser();
 
   useEffect(() => {
     const fetchBalance = async () => {
