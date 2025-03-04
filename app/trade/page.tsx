@@ -4,6 +4,7 @@ import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
+import { getUserId, goToLogin } from "../services/session";
 
 interface TradeProps {
   id?: string;
@@ -31,6 +32,16 @@ const Trade: React.FC<TradeProps> = () => {
     "idle" | "uploading" | "submitting" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userId = getUserId();
+    if (userId) {
+      setCurrentUser(userId);
+    } else {
+      goToLogin();
+    }
+  }, []);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -74,14 +85,15 @@ const Trade: React.FC<TradeProps> = () => {
       let uploadedImageUrls = [...imageList];
       if (files.length > 0) {
         setSubmissionStatus("uploading");
-        
+
         const uploadPromises = files.map(async (file) => {
           const fileName = `${Date.now()}_${file.name}`;
           const { data, error } = await supabase.storage
             .from("auction-images")
             .upload(`public/${fileName}`, file);
 
-          if (error) throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+          if (error)
+            throw new Error(`Failed to upload ${file.name}: ${error.message}`);
 
           const { data: publicUrlData } = supabase.storage
             .from("auction-images")
@@ -90,7 +102,10 @@ const Trade: React.FC<TradeProps> = () => {
           return publicUrlData.publicUrl;
         });
 
-        uploadedImageUrls = [...imageList, ...(await Promise.all(uploadPromises))];
+        uploadedImageUrls = [
+          ...imageList,
+          ...(await Promise.all(uploadPromises)),
+        ];
       }
 
       // Store form data with image URLs
@@ -106,10 +121,12 @@ const Trade: React.FC<TradeProps> = () => {
           status: "active",
           highest_bid: null,
           highest_bidder: null,
+          owner: currentUser, // Add owner field
         },
       ]);
 
-      if (insertError) throw new Error(`Failed to save auction: ${insertError.message}`);
+      if (insertError)
+        throw new Error(`Failed to save auction: ${insertError.message}`);
 
       setSubmissionStatus("success");
       setTimeout(() => {
@@ -118,15 +135,15 @@ const Trade: React.FC<TradeProps> = () => {
     } catch (err) {
       console.error("Error:", err);
       setSubmissionStatus("error");
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     }
   };
 
   const fetchImages = async () => {
     try {
-      const { data, error } = await supabase
-        .from("Auction")
-        .select("image");
+      const { data, error } = await supabase.from("Auction").select("image");
 
       if (error) {
         console.error("Error fetching images:", error);
@@ -175,7 +192,10 @@ const Trade: React.FC<TradeProps> = () => {
       </div>
       <div className="flex h-[75vh] px-12 mt-8">
         {/* Form Section */}
-        <form className="space-y-4 text-white w-4/12" onSubmit={handleMasterSubmit}>
+        <form
+          className="space-y-4 text-white w-4/12"
+          onSubmit={handleMasterSubmit}
+        >
           <InputField
             type="text"
             name="name"
@@ -226,16 +246,24 @@ const Trade: React.FC<TradeProps> = () => {
               onChange={handleFileSelect}
               className="w-full cursor-pointer mb-2"
               accept="image/*"
-              disabled={submissionStatus === "uploading" || imageList.length >= 5}
+              disabled={
+                submissionStatus === "uploading" || imageList.length >= 5
+              }
             />
             <p className="text-[#878787] text-sm mt-2">Upload up to 5 images</p>
           </div>
           <button
             type="submit"
-            disabled={submissionStatus === "uploading" || submissionStatus === "submitting"}
+            disabled={
+              submissionStatus === "uploading" ||
+              submissionStatus === "submitting"
+            }
             className={`border text-white hover:text-black hover:bg-white p-8 w-full flex items-center justify-center disabled:opacity-50 ${
-              submissionStatus === "success" ? "bg-green-500" : 
-              submissionStatus === "error" ? "bg-red-500" : ""
+              submissionStatus === "success"
+                ? "bg-green-500"
+                : submissionStatus === "error"
+                ? "bg-red-500"
+                : ""
             }`}
           >
             {getButtonText()}{" "}

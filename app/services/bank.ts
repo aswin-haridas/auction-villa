@@ -1,10 +1,10 @@
 import { supabase } from "./client";
 
-export const getWalletBalance = async (username: string): Promise<number> => {
+export const getWalletBalance = async (user_id: string): Promise<number> => {
   const { data, error } = await supabase
     .from("User")
     .select("balance")
-    .eq("username", username)
+    .eq("user_id", user_id)
     .single();
 
   if (error || !data) throw error || new Error("No data found");
@@ -13,14 +13,14 @@ export const getWalletBalance = async (username: string): Promise<number> => {
 };
 
 export const updateBalance = async (
-  username: string,
+  user_id: string,
   amount: number,
   type: "add" | "subtract"
 ): Promise<any> => {
   const { data, error } = await supabase
     .from("User")
     .select("balance")
-    .eq("username", username)
+    .eq("user_id", user_id)
     .single();
 
   if (error || !data) throw error || new Error("No data found");
@@ -31,7 +31,7 @@ export const updateBalance = async (
   const { data: updatedData, error: updateError } = await supabase
     .from("User")
     .update({ balance: newBalance })
-    .eq("username", username)
+    .eq("user_id", user_id)
     .single();
 
   if (updateError) throw updateError;
@@ -40,13 +40,13 @@ export const updateBalance = async (
 };
 
 export const checkBalance = async (
-  username: string,
+  user_id: string,
   amount: number
 ): Promise<any> => {
   const { data, error } = await supabase
     .from("User")
     .select("balance")
-    .eq("username", username)
+    .eq("user_id", user_id)
     .single();
 
   if (error || !data) throw error || new Error("No data found");

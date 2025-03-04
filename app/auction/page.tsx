@@ -2,10 +2,11 @@
 import Link from "next/link";
 import Card from "../components/card";
 import { anton } from "../font/fonts";
-import { useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
 import Header from "../components/header";
+import { getUserId } from "../services/session";
 
 interface AuctionItem {
   id: number;
@@ -16,6 +17,7 @@ interface AuctionItem {
 }
 
 function Auction() {
+  const user_id = getUserId();
   const [items, setItems] = useState<AuctionItem[]>([]);
 
   useEffect(() => {
@@ -33,11 +35,7 @@ function Auction() {
 
   const auctionList = items.map((item) => (
     <Link key={item.id} href={`/bidding/${item.id}`}>
-      <Card
-        image={item.image[0]}
-        name={item.name}
-        category={item.category}
-      />
+      <Card image={item.image[0]} name={item.name} category={item.category} />
     </Link>
   ));
 

@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { useRouter } from "next/router";
+import { redirect } from "next/navigation";
 
 export async function checkAuth(
   username: string,
@@ -25,16 +25,9 @@ export async function checkAuth(
   return false;
 }
 
-export async function getUserId(): Promise<string | null> {
-  const userId = sessionStorage.getItem("user_id");
-  const router = useRouter();
-
-  if (!userId) {
-    await router.push("/auth/page.tsx");
-    return null;
-  }
-
-  return userId;
+export function getUserId(): string | null {
+  const storedUserId = sessionStorage.getItem("user_id");
+  return storedUserId ? storedUserId : null;
 }
 
 export async function getUsername(): Promise<string | null> {
@@ -62,4 +55,9 @@ export function useSignOut(): () => void {
   return () => {
     sessionStorage.removeItem("user_id");
   };
+}
+
+
+export function goToLogin() {
+  redirect("/auth");
 }

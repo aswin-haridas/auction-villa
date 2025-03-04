@@ -1,25 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getUser } from "../services/session";
 import Header from "../components/header";
 import { getWalletBalance } from "../services/bank";
+import { getUserId } from "../services/session";
 const Bank: React.FC = () => {
-  const [balance, setBalance] = useState<number | null>(null);
-  const username: string | null = getUser();
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (username) {
-        const balance = await getWalletBalance(username);
-        setBalance(balance);
-      }
-    };
-    fetchBalance();
-  }, [username]);
-  if (!username) {
-    return <div>Please log in to view your bank details.</div>;
-  }
+  const [balance, setBalance] = useState<number>(0);
+  const user_id = getUserId();
   return (
     <>
       <Header />
