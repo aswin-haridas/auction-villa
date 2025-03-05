@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { checkAuth } from "../services/session";
+import { supabase } from "../services/client";
 
 const AccessPage = () => {
   const [username, setUsername] = useState("");
@@ -9,14 +9,28 @@ const AccessPage = () => {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  // Handle form submission
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    try {
-      await checkAuth(username, password);
+
+    const { data, error } = await supabase
+      .from("User")
+      .select("*")
+      .eq("username", username)
+      .eq("password", password)
+      .single();
+
+    if (error) {
+      setError("Invalid credentials");
+      return;
+    }
+
+    if (data) {
+      console.log("Data:", data);
+      sessionStorage.setItem("username", username);
+      sessionStorage.setItem("user_id", data.user_id);
       router.push("/");
-    } catch (err: any) {
-      setError(err.message);
+    } else {
+      setError("Invalid credentials");
     }
   };
 

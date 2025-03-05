@@ -19,6 +19,7 @@ export async function checkAuth(
 
   if (data) {
     sessionStorage.setItem("user_id", data.user_id);
+    sessionStorage.setItem("username", username);
     return true;
   }
 
@@ -31,24 +32,8 @@ export function getUserId(): string | null {
 }
 
 export async function getUsername(): Promise<string | null> {
-  const userId = sessionStorage.getItem("user_id");
-
-  if (!userId) {
-    return null;
-  }
-
-  const { data, error } = await supabase
-    .from("User")
-    .select("username")
-    .eq("user_id", userId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching username:", error);
-    return null;
-  }
-
-  return data ? data.username : null;
+  const storedUsername = sessionStorage.getItem("username");
+  return storedUsername ? storedUsername : "###";
 }
 
 export function useSignOut(): () => void {

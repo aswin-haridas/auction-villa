@@ -9,7 +9,7 @@ const Bank: React.FC = () => {
   const user_id = getUserId();
   return (
     <>
-      <Header />
+    <Header />
       <div className="flex flex-col p-4">
         <p className="text-base text-gray-500">Bank Balance:</p>
         <p className="text-4xl text-green-500 font-semibold">{balance}u</p>

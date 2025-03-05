@@ -51,7 +51,8 @@ function Auction() {
 
   return (
     <>
-      <Header />
+        <Header />
+
       <div className="px-12">
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Paintings

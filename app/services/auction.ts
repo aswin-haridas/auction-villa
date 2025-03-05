@@ -1,82 +1,55 @@
-import { supabase } from "./client";
+import { supabase } from "@/app/services/client";
+import { Auction } from "@/app/types/auction";
 
-export const setAuctionStatus = async (id: string, status: string) => {
-  const { data, error } = await supabase
-    .from("Auctions")
-    .update({ status })
-    .match({ id });
-
-  if (error) {
-    console.log("Error updating auction status", error);
-    return null;
-  }
-
-  return data;
-};
-
-export const getHighestBidder = async (auctionId: string) => {
-  const { data, error } = await supabase
-    .from("Bid")
-    .select("user_id, amount")
-    .eq("auction_id", auctionId)
-    .order("amount", { ascending: false })
-    .limit(1)
+export const fetchAuction = async (
+  auctionId: string
+): Promise<Auction | null> => {
+  const { data: auction, error } = await supabase
+    .from("Auction")
+    .select("*")
+    .eq("id", auctionId)
     .single();
 
   if (error) {
-    console.log("Error fetching highest bidder", error);
+    console.error("Error fetching auction:", error);
     return null;
   }
 
-  return data;
+  return auction;
 };
 
-export const getHighestBid = async (auctionId: string) => {
-  const { data, error } = await supabase
-    .from("Bid")
-    .select("amount")
-    .eq("auction_id", auctionId)
-    .order("amount", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error) {
-    console.log("Error fetching highest bid", error);
-    return null;
-  }
-
-  return data;
-};
-
-export const saveBid = async (bid: {
-  bid_id: string;
-  user_id: string;
-  amount: number;
-  timestamp: string;
-  auction_id: string;
-}) => {
-  const { data, error } = await supabase.from("Bid").insert([bid]);
-
-  if (error) {
-    console.log("Error saving bid", error);
-    return null;
-  }
-
-  return data;
-};
-
-
-export const getBids = async (auctionId: string) => {
-  const { data, error } = await supabase
+export const fetchBids = async (auctionId: string): Promise<any[]> => {
+  const { data: bidsData, error } = await supabase
     .from("Bid")
     .select("*")
     .eq("auction_id", auctionId)
-    .order("timestamp", { ascending: true });
+    .order("timestamp", { ascending: false }); // This ensures latest bids come first
+  if (error) {
+    console.error("Error fetching bids:", error);
+    return [];
+  }
+  return bidsData;
+};
+
+export const updateAuctionDetails = async (
+  auctionId: string,
+  newHighestBid: number,
+  newHighestBidder: string
+): Promise<Auction | null> => {
+  const { data: updatedAuction, error } = await supabase
+    .from("Auction")
+    .update({
+      highest_bid: newHighestBid,
+      highest_bidder: newHighestBidder,
+    })
+    .eq("id", auctionId)
+    .select("*")
+    .single();
 
   if (error) {
-    console.log("Error fetching bids", error);
+    console.error("Error updating auction details:", error);
     return null;
   }
 
-  return data;
-}
+  return updatedAuction;
+};

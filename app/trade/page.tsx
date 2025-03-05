@@ -1,10 +1,10 @@
 "use client";
-import Header from "../components/header";
 import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
 import { getUserId, goToLogin } from "../services/session";
+import Header from "../components/header";
 
 interface TradeProps {
   id?: string;
@@ -185,6 +185,7 @@ const Trade: React.FC<TradeProps> = () => {
   return (
     <>
       <Header />
+
       <div className="px-12">
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Create auction

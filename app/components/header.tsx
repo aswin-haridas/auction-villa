@@ -1,68 +1,67 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { getUsername, goToLogin, useSignOut } from "../services/session";
+import { useRouter } from "next/navigation";
 
 const symbols = ["𖤐", "𖤍", "⁶⁶⁶", "🕇"];
 
 const Header: React.FC = () => {
   const [symbol, setSymbol] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
-  const signOut = useSignOut();
+  const [username, setUsername] = useState<string | null>("");
+  const router = useRouter();
 
-  
-    useEffect(() => {
-      const fetchUsername = async () => {
-        const fetchedUsername = await getUsername();
-        if (!fetchedUsername) {
-          goToLogin();
-        } else {
-          setUsername(fetchedUsername);
-        }
-      };
-  
-      fetchUsername();
-  
-      const changeSymbol = () => {
-        setSymbol(symbols[Math.floor(Math.random() * symbols.length)]);
-      };
-  
-      changeSymbol();
-      const interval = setInterval(
-        changeSymbol,
-        Math.random() * (1200 - 500) + 500
-      );
-  
-      return () => clearInterval(interval);
-    }, []);
-  
-    return (
-      <div className="w-full h-14 flex items-center pt-4 px-12 ">
-        <div className="text-[#ba3737] flex-1">{symbol}</div>
-        <div className="flex justify-around flex-1">
-          {["Basement", "Auction", "Trade", "Bank"].map((item, idx) => (
-            <Link
-              key={idx}
-              href={
-                item.toLowerCase() === "basement" ? "/" : `/${item.toLowerCase()}`
-              }
-              className="text-[#ba3737] no-underline text-base cursor-pointer hover:underline"
-            >
-              {item}
-            </Link>
-          ))}
-        </div>
-        <div className="flex justify-end flex-1">
-          <button
-            onClick={signOut}
-            className="text-[#ba3737] text-base cursor-pointer hover:underline"
-          >
-            {username || "###"}
-          </button>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    const checkUsername = () => {
+      const storedUsername = sessionStorage.getItem("username");
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    };
+
+    checkUsername();
+
+    const changeSymbol = () => {
+      setSymbol(symbols[Math.floor(Math.random() * symbols.length)]);
+    };
+
+    changeSymbol();
+    const interval = setInterval(changeSymbol, Math.random() * (1200 - 500) + 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSignOut = () => {
+    sessionStorage.removeItem("username");
+    setUsername(null);
+    router.push("/auth");
   };
-  
-  export default Header;
-  
+
+  return (
+    <div className="w-full h-14 flex items-center pt-4 px-12 ">
+      <div className="text-[#ba3737] flex-1">{symbol}</div>
+      <div className="flex justify-around flex-1">
+        {["Basement", "Auction", "Trade", "Bank"].map((item, idx) => (
+          <Link
+            key={idx}
+            href={
+              item.toLowerCase() === "basement" ? "/" : `/${item.toLowerCase()}`
+            }
+            className="text-[#ba3737] no-underline text-base cursor-pointer hover:underline"
+          >
+            {item}
+          </Link>
+        ))}
+      </div>
+      <div className="flex justify-end flex-1">
+        <button
+          onClick={handleSignOut}
+          className="text-[#ba3737] text-base cursor-pointer hover:underline"
+        >
+          {username || "###"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Header;
