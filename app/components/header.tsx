@@ -15,6 +15,8 @@ const Header: React.FC = () => {
       const storedUsername = sessionStorage.getItem("username");
       if (storedUsername) {
         setUsername(storedUsername);
+      } else {
+        router.push("/auth");
       }
     };
 
@@ -25,13 +27,17 @@ const Header: React.FC = () => {
     };
 
     changeSymbol();
-    const interval = setInterval(changeSymbol, Math.random() * (1200 - 500) + 500);
+    const interval = setInterval(
+      changeSymbol,
+      Math.random() * (1200 - 500) + 500
+    );
 
     return () => clearInterval(interval);
-  }, []);
+  }, [router]);
 
   const handleSignOut = () => {
     sessionStorage.removeItem("username");
+    sessionStorage.removeItem("user_id");
     setUsername(null);
     router.push("/auth");
   };

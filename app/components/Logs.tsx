@@ -3,6 +3,8 @@ import { BidHistoryProps } from "../types/auction";
 const BidHistory: React.FC<BidHistoryProps> = ({ bids }) => {
   const userColors: string[] = ["#1abc9c", "#e67e22"];
 
+  // No need to sort again if the bids are already sorted from the API
+  // But we'll keep this in case the order changes
   const sortedBids = [...bids].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
@@ -14,7 +16,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids }) => {
           <p className="text-gray-400">No bids yet</p>
         ) : (
           sortedBids.map((bid, index) => (
-            <div key={bid.bid_id} className="mb-3">
+            <div key={bid.bid_id || `bid-${index}-${bid.timestamp}`} className="mb-3">
               <span
                 style={{ color: userColors[index % userColors.length] }}
                 className="font-bold"

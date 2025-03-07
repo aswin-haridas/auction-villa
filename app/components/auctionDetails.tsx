@@ -1,13 +1,17 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import { playfair } from "@/app/font/fonts";
 import { AuctionDetailsProps } from "@/app/types/auction";
 import { subscribeToAuction, subscribeToBids } from "@/app/services/auction";
+import { getWalletBalance } from "../services/bank";
+import { getUserId } from "../services/auth";
 
 export default function AuctionDetails({
   auction: initialAuction,
 }: AuctionDetailsProps) {
   const [auction, setAuction] = useState(initialAuction);
   const [bids, setBids] = useState<any[]>([]);
+
 
   useEffect(() => {
     // Set the initial auction data
@@ -83,6 +87,12 @@ export default function AuctionDetails({
             Highest Bidder:{" "}
             <span className="font-semibold text-[#FEF9E1]">
               {highestBidder}
+            </span>
+          </p>
+          <p>
+            <span className="text-[#878787] text-lg">Wallet bal: </span>
+            <span className="text-green-700 text-lg">
+              {432463}u
             </span>
           </p>
         </div>

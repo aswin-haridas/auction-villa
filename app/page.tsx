@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
 import Header from "./components/Header";
-import { getUserId } from "./services/session";
+import { getUserId } from "./services/auth";
 
 interface Paintings {
   id: number;

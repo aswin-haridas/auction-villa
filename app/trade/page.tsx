@@ -3,7 +3,7 @@ import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
-import { getUsername, goToLogin } from "../services/session";
+import { getUsername, goToLogin } from "../services/auth";
 import Header from "../components/Header";
 
 interface TradeProps {

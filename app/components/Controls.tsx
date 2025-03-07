@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { Bid, BiddingControlsProps } from "@/app/types/auction";
-import { buyOut, placeBid } from "@/app/services/bids";
-import { getUsername } from "../services/session";
+import { buyOut, placeBid } from "@/app/services/auction";
+import { getUsername } from "../services/auth";
 
 const biddingValues = [100, 500, 1000, 5000];
 
@@ -14,7 +14,7 @@ export default function BiddingControls({
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [bids, setBids] = useState<Bid[]>([]); 
+  const [bids, setBids] = useState<Bid[]>([]);
   const [username, setUsername] = useState<string>("");
 
   useEffect(() => {
@@ -29,15 +29,37 @@ export default function BiddingControls({
   }, []);
 
   const handlePlaceBid = async () => {
-    await placeBid({
-      auction,
-      bidAmount,
-      selectedValue: selectedValue,
-      setAuction,
-      setBids,
-      setError,
-      setLoading,
-    });
+    setLoading(true);
+    const startTime = Date.now();
+
+    try {
+      await placeBid({
+        auction,
+        bidAmount,
+        selectedValue: selectedValue,
+        setAuction,
+        setBids,
+        setError,
+        setLoading: () => {}, // Prevent the service from changing loading state
+      });
+
+      // Calculate how much time has passed and wait for the remainder of 3 seconds
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, 1000 - elapsedTime);
+
+      // Wait for the remaining time to complete 3 seconds total
+      await new Promise((resolve) => setTimeout(resolve, remainingTime));
+    } catch (err) {
+      // If there was an error that wasn't handled by placeBid
+      setError(err instanceof Error ? err.message : "An error occurred");
+
+      // Still ensure we wait the full 3 seconds before turning off loading state
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, 1000 - elapsedTime);
+      await new Promise((resolve) => setTimeout(resolve, remainingTime));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +95,7 @@ export default function BiddingControls({
               : "bg-red-800 cursor-pointer"
           }`}
         >
-          {loading ? "Loading..." : "Place Bid"}
+          {loading ? "Please Wait.." : "Place Bid"}
         </button>
         <button
           onClick={() =>

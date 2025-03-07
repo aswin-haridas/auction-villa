@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 
-export const getWalletBalance = async (user_id: string): Promise<number> => {
+export const getWalletBalance = async (): Promise<number> => {
+  const user_id = sessionStorage.getItem("user_id");
   const { data, error } = await supabase
     .from("User")
     .select("balance")

@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
 import Header from "../components/Header";
-import { getUserId } from "../services/session";
+import { getUserId } from "../services/auth";
+import { useRouter } from "next/navigation";
 
 interface AuctionItem {
   id: number;
@@ -17,10 +18,20 @@ interface AuctionItem {
 }
 
 function Auction() {
-  const user_id = getUserId();
+  const router = useRouter();
   const [items, setItems] = useState<AuctionItem[]>([]);
+  const user_id = getUserId();
 
   useEffect(() => {
+    // Check if user is authenticated
+    if (typeof window !== "undefined") {
+      const username = sessionStorage.getItem("username");
+      if (!username) {
+        router.push("/auth");
+        return;
+      }
+    }
+
     const fetchAuctions = async () => {
       const { data, error } = await supabase.from("Auction").select("*");
       if (error) {
@@ -31,10 +42,10 @@ function Auction() {
       }
     };
     fetchAuctions();
-  }, []);
+  }, [router]);
 
   const auctionList = items.map((item) => (
-    <Link key={item.id} href={`/bidding/${item.id}`}>
+    <Link key={item.id} href={`/auction/${item.id}`}>
       <Card image={item.image[0]} name={item.name} category={item.category} />
     </Link>
   ));

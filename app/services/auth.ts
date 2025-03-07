@@ -27,21 +27,19 @@ export async function checkAuth(
 }
 
 export function getUserId(): string | null {
-  const storedUserId = sessionStorage.getItem("user_id");
-  return storedUserId ? storedUserId : null;
+  return sessionStorage.getItem("user_id");
 }
 
-export async function getUsername(): Promise<string | null> {
-  const storedUsername = sessionStorage.getItem("username");
-  return storedUsername ? storedUsername : "###";
+export function getUsername(): string | null {
+  return sessionStorage.getItem("username");
 }
 
 export function useSignOut(): () => void {
   return () => {
     sessionStorage.removeItem("user_id");
+    sessionStorage.removeItem("username");
   };
 }
-
 
 export function goToLogin() {
   redirect("/auth");

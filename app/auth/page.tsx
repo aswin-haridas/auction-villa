@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../services/client";
+import { checkAuth } from "../services/auth";
 
 const AccessPage = () => {
   const [username, setUsername] = useState("");
@@ -9,25 +9,14 @@ const AccessPage = () => {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data, error } = await supabase
-      .from("User")
-      .select("*")
-      .eq("username", username)
-      .eq("password", password)
-      .single();
+    const isAuthenticated = await checkAuth(username, password);
 
-    if (error) {
-      setError("Invalid credentials");
-      return;
-    }
-
-    if (data) {
-      console.log("Data:", data);
+    if (isAuthenticated) {
+      // Store username in sessionStorage before redirecting
       sessionStorage.setItem("username", username);
-      sessionStorage.setItem("user_id", data.user_id);
       router.push("/");
     } else {
       setError("Invalid credentials");

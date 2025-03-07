@@ -7,7 +7,13 @@ import Header from "@/app/components/Header";
 import { Auction, Bid } from "@/app/types/auction";
 import { useEffect, useState, useCallback, memo } from "react";
 import { useParams } from "next/navigation";
-import { fetchAuction, fetchBids } from "@/app/services/auction";
+import {
+  fetchAuction,
+  fetchBids,
+  subscribeToAuction,
+  subscribeToBids,
+} from "@/app/services/auction";
+import Link from "next/link";
 
 // Memoized components to prevent unnecessary re-renders
 const MemoizedAuctionImages = memo(AuctionImages);
@@ -49,25 +55,31 @@ export default function Bidding() {
     }
   }, [auctionId]);
 
-  // Poll for updates
+  // Set up real-time subscriptions
   useEffect(() => {
     getAuctionData();
 
-    // Set up polling for real-time updates
-    const pollInterval = setInterval(() => {
-      if (typeof auctionId === "string") {
-        fetchBids(auctionId)
-          .then((newBids) => {
-            if (newBids && JSON.stringify(newBids) !== JSON.stringify(bids)) {
-              setBids(newBids);
-            }
-          })
-          .catch((err) => console.error("Polling error:", err));
-      }
-    }, 5000); // Poll every 5 seconds
+    // Only set up subscriptions if we have a valid auction ID
+    if (typeof auctionId !== "string") return;
 
-    return () => clearInterval(pollInterval);
-  }, [auctionId, getAuctionData, bids]);
+    // Set up real-time subscriptions
+    const unsubscribeAuction = subscribeToAuction(
+      auctionId,
+      (updatedAuction) => {
+        setAuction(updatedAuction);
+      }
+    );
+
+    const unsubscribeBids = subscribeToBids(auctionId, (updatedBids) => {
+      setBids(updatedBids);
+    });
+
+    // Clean up subscriptions when component unmounts
+    return () => {
+      unsubscribeAuction();
+      unsubscribeBids();
+    };
+  }, [auctionId, getAuctionData]);
 
   if (isLoading) {
     return (
@@ -88,7 +100,7 @@ export default function Bidding() {
   if (!auction) {
     return (
       <div className="p-4 flex items-center justify-center h-screen">
-        <div className="text-white text-xl">Auction not found</div>
+        <div className="text-white text-xl">Auction not found! <Link className="text-red-700 hover:underline" href={"/"}>go to the auction list</Link></div>
       </div>
     );
   }
