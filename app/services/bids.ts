@@ -2,6 +2,22 @@ import { supabase } from "@/app/services/client";
 import { Auction, Bid } from "@/app/types/auction";
 import { getUserId, getUsername } from "@/app/services/session";
 
+interface BidParams {
+  auction: Auction;
+  setAuction: (auction: Auction) => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
+}
+
+interface PlaceBidParams extends BidParams {
+  bidAmount: string;
+  selectedValue: number | null;
+  setBids: (callback: (prev: Bid[]) => Bid[]) => void;
+}
+
+/**
+ * Places a bid on an auction
+ */
 export async function placeBid({
   auction,
   bidAmount,
@@ -10,19 +26,13 @@ export async function placeBid({
   setBids,
   setError,
   setLoading,
-}: {
-  auction: Auction;
-  bidAmount: string;
-  selectedValue: number | null;
-  setAuction: (auction: Auction) => void;
-  setBids: (bids: (prev: Bid[]) => Bid[]) => void;
-  setError: (error: string | null) => void;
-  setLoading: (loading: boolean) => void;
-}) {
+}: PlaceBidParams): Promise<void> {
   if (!auction) return;
+
   setLoading(true);
   setError(null);
 
+  // Parse and validate bid amount
   const amount = selectedValue ?? Number(bidAmount);
   if (isNaN(amount)) {
     setError("Invalid bid amount.");
@@ -31,7 +41,6 @@ export async function placeBid({
   }
 
   const currentHighest = auction.highest_bid || auction.price;
-
   if (amount <= currentHighest) {
     setError("Bid must be higher than current bid.");
     setLoading(false);
@@ -39,42 +48,45 @@ export async function placeBid({
   }
 
   try {
-    const userId = await getUserId();
-    const username = await getUsername();
+    // Get user information in parallel
+    const [userId, username] = await Promise.all([getUserId(), getUsername()]);
+
     const timestamp = new Date().toISOString();
-    const { error } = await supabase.from("Bid").insert([
-      {
-        amount,
-        auction_id: auction.id,
-        user_id: userId,
-        timestamp,
-        username: username,
-      },
+
+    // Create bid record
+    const bidData = {
+      amount,
+      auction_id: auction.id,
+      user_id: userId,
+      timestamp,
+      username,
+    };
+
+    // Execute both operations in parallel
+    const [bidResult, auctionResult] = await Promise.all([
+      supabase.from("Bid").insert([bidData]),
+      supabase
+        .from("Auction")
+        .update({ highest_bid: amount, highest_bidder: userId }) // Changed from username to userId
+        .eq("id", auction.id),
     ]);
 
-    if (error) {
-      console.error("Error saving bid:", error);
-      setError("Failed to place bid due to a database error.");
-      setLoading(false);
-      return;
+    // Check for errors
+    if (bidResult.error) {
+      throw new Error(`Failed to place bid: ${bidResult.error.message}`);
     }
 
-    const { error: updateError } = await supabase
-      .from("Auction")
-      .update({ highest_bid: amount, highest_bidder: username })
-      .eq("id", auction.id);
-
-    if (updateError) {
-      console.error("Error updating auction:", updateError);
-      setError("Failed to update auction details.");
-      setLoading(false);
-      return;
+    if (auctionResult.error) {
+      throw new Error(
+        `Failed to update auction: ${auctionResult.error.message}`
+      );
     }
 
+    // Update UI state
     setAuction({
       ...auction,
       highest_bid: amount,
-      highest_bidder: username,
+      highest_bidder: username, // Keep using username for display purposes in the UI
     });
 
     setBids((prev) => [
@@ -89,53 +101,54 @@ export async function placeBid({
       },
     ]);
   } catch (err) {
+    console.error("Bid placement error:", err);
     setError(err instanceof Error ? err.message : "Failed to place bid");
   } finally {
     setLoading(false);
   }
 }
+
+/**
+ * Processes a buyout for an auction
+ */
 export async function buyOut({
   auction,
   setAuction,
   setError,
   setLoading,
-}: {
-  auction: Auction;
-  setAuction: (auction: Auction) => void;
-  setError: (error: string | null) => void;
-  setLoading: (loading: boolean) => void;
-}) {
+}: BidParams): Promise<void> {
   if (!auction) return;
+
   setLoading(true);
   setError(null);
 
   try {
-    const username = await getUsername();
+    const [userId, username] = await Promise.all([getUserId(), getUsername()]);
+
     const { error } = await supabase
       .from("Auction")
       .update({
         highest_bid: auction.buyout_price,
-        highest_bidder: username,
+        highest_bidder: userId, // Changed from username to userId
         status: "completed",
       })
       .eq("id", auction.id);
 
     if (error) {
-      console.error("Error processing buyout:", error);
-      setError("Failed to complete buyout.");
-      setLoading(false);
-      return;
+      throw new Error(`Failed to complete buyout: ${error.message}`);
     }
 
+    // Update UI state
     setAuction({
       ...auction,
       highest_bid: auction.buyout_price,
-      highest_bidder: username,
+      highest_bidder: username, // Keep using username for display purposes in the UI
       status: "completed",
     });
 
     setError("Congratulations! You've successfully bought this item!");
   } catch (err) {
+    console.error("Buyout error:", err);
     setError(err instanceof Error ? err.message : "Failed to process buyout");
   } finally {
     setLoading(false);

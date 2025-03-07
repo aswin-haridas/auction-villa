@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import Card from "../components/card";
+import Card from "../components/AtomCard";
 import { anton } from "../font/fonts";
 import { useEffect, useState } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
-import Header from "../components/header";
+import Header from "../components/Header";
 import { getUserId } from "../services/session";
 
 interface AuctionItem {
@@ -41,7 +41,7 @@ function Auction() {
 
   return (
     <>
-    <Header />
+      <Header />
       <div className="px-12">
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Live auctions

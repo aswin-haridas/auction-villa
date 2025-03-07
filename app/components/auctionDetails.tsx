@@ -1,11 +1,55 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { playfair } from "@/app/font/fonts";
 import { AuctionDetailsProps } from "@/app/types/auction";
+import { subscribeToAuction, subscribeToBids } from "@/app/services/auction";
 
 export default function AuctionDetails({
-  auction
+  auction: initialAuction,
 }: AuctionDetailsProps) {
-  
+  const [auction, setAuction] = useState(initialAuction);
+  const [bids, setBids] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Set the initial auction data
+    setAuction(initialAuction);
+
+    // Subscribe to real-time updates for the auction
+    const unsubscribeAuction = subscribeToAuction(
+      initialAuction.id,
+      (updatedAuction) => {
+        setAuction(updatedAuction);
+      }
+    );
+
+    // Subscribe to real-time updates for bids
+    const unsubscribeBids = subscribeToBids(
+      initialAuction.id,
+      (updatedBids) => {
+        setBids(updatedBids);
+      }
+    );
+
+    // Clean up subscriptions when component unmounts
+    return () => {
+      unsubscribeAuction();
+      unsubscribeBids();
+    };
+  }, [initialAuction.id]);
+
+  // Get highest bid from the bids array
+  const highestBid =
+    bids.length > 0
+      ? Math.max(...bids.map((bid) => bid.amount))
+      : auction.highest_bid || auction.price;
+
+  // Get highest bidder from the bids array
+  const highestBidder =
+    bids.length > 0
+      ? bids.reduce((prev, current) =>
+          prev.amount > current.amount ? prev : current
+        ).username
+      : auction.highest_bidder || "None yet";
+
   return (
     <div className="flex flex-col text-white ">
       <h1
@@ -38,7 +82,7 @@ export default function AuctionDetails({
           <p className="text-[#878787] text-lg">
             Highest Bidder:{" "}
             <span className="font-semibold text-[#FEF9E1]">
-              {auction.highest_bidder || "None yet"}
+              {highestBidder}
             </span>
           </p>
         </div>
@@ -47,9 +91,7 @@ export default function AuctionDetails({
         <h2 className="text-[#ba3737] text-xl font-semibold mb-2">
           Current Bid
         </h2>
-        <h1 className="text-5xl font-bold">
-          {auction.highest_bid || auction.price}u
-        </h1>
+        <h1 className="text-5xl font-bold">{highestBid}u</h1>
       </div>
     </div>
   );

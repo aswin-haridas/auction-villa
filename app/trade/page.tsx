@@ -3,13 +3,14 @@ import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
-import { getUserId, goToLogin } from "../services/session";
-import Header from "../components/header";
+import { getUsername, goToLogin } from "../services/session";
+import Header from "../components/Header";
 
 interface TradeProps {
   id?: string;
   name: string;
   price: number;
+  owner: string;
   buyout_price: number;
   category: string;
   end_time: string;
@@ -35,12 +36,16 @@ const Trade: React.FC<TradeProps> = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   useEffect(() => {
-    const userId = getUserId();
-    if (userId) {
-      setCurrentUser(userId);
-    } else {
-      goToLogin();
-    }
+    const fetchData = async () => {
+      const userId = await getUsername();
+      if (userId) {
+        setCurrentUser(userId);
+      } else {
+        goToLogin();
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleInputChange = (
