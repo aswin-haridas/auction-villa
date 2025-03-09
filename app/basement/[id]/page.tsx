@@ -97,18 +97,28 @@ export default function PaintingPage() {
           </Link>
         </div>
       </div>
-      <div className=" w-1/2 flex justify-end">
+      <div className="w-1/2 flex justify-end">
         {painting.image && painting.image.length > 0 ? (
-          <div className=" w-4/6 relative">
+          <div className="w-4/6 relative h-[500px]">
+            {" "}
+            {/* Added fixed height */}
             <div className="absolute top-2 right-2 flex space-x-2 z-10">
-              <button 
-                onClick={() => setCurrentImage(prev => (prev > 0 ? prev - 1 : painting.image.length - 1))}
+              <button
+                onClick={() =>
+                  setCurrentImage((prev) =>
+                    prev > 0 ? prev - 1 : painting.image.length - 1
+                  )
+                }
                 className="bg-black/50 p-1 rounded-full hover:bg-black/70 transition-colors"
               >
                 <ChevronLeftIcon className="text-white h-5 w-5" />
               </button>
-              <button 
-                onClick={() => setCurrentImage(prev => (prev < painting.image.length - 1 ? prev + 1 : 0))}
+              <button
+                onClick={() =>
+                  setCurrentImage((prev) =>
+                    prev < painting.image.length - 1 ? prev + 1 : 0
+                  )
+                }
                 className="bg-black/50 p-1 rounded-full hover:bg-black/70 transition-colors"
               >
                 <ChevronRightIcon className="text-white h-5 w-5" />
