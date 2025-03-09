@@ -8,7 +8,7 @@ import React from "react";
 import Header from "./components/Header";
 
 interface Paintings {
-  id: number;
+  painting_id: string;
   image: string[];
   name: string;
   price: number;
@@ -44,7 +44,7 @@ function Auction() {
 
   const paintingList = useMemo(() => {
     return paintings.map((painting) => (
-      <Link key={painting.id} href={`/bidding/${painting.id}`}>
+      <Link key={painting.painting_id} href={`/basement/${painting.painting_id}`}>
         <Card
           image={painting.image && painting.image[0] ? painting.image[0] : ""}
           name={painting.name}
