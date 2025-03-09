@@ -1,10 +1,11 @@
 "use client";
 import { anton } from "../font/fonts";
-import { useState, ChangeEvent, useEffect } from "react";
+import { useEffect, useReducer, ChangeEvent, FormEvent } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
+import { useRouter } from "next/navigation";
 
-interface TradeProps {
+interface AuctionData {
   id?: string;
   name: string;
   price: number;
@@ -17,59 +18,144 @@ interface TradeProps {
   highest_bidder?: string;
 }
 
-const Trade: React.FC<TradeProps> = () => {
-  const userId = sessionStorage.getItem("user_id");
+// Define state and actions for reducer
+interface FormState {
+  formData: {
+    name: string;
+    price: number | undefined;
+    buyout_price: number | undefined;
+    category: string;
+    end_time: string;
+  };
+  files: File[];
+  imageList: string[];
+  previewUrls: string[];
+  submissionStatus: "idle" | "uploading" | "submitting" | "success" | "error";
+  error: string | null;
+  currentUser: string | null;
+}
 
-  useEffect(() => {
-    if (!userId) {
-      window.location.href = "/auth";
-    }
-  }, [userId]);
+type FormAction =
+  | { type: "UPDATE_FIELD"; field: string; value: any }
+  | { type: "SET_FILES"; files: File[] }
+  | { type: "ADD_PREVIEW_URLS"; urls: string[] }
+  | { type: "REMOVE_PREVIEW"; index: number }
+  | { type: "REMOVE_IMAGE"; index: number }
+  | { type: "SET_STATUS"; status: FormState["submissionStatus"] }
+  | { type: "SET_ERROR"; error: string | null }
+  | { type: "SET_CURRENT_USER"; user: string }
+  | { type: "RESET_FORM" };
 
-  const [formData, setFormData] = useState({
+const initialState: FormState = {
+  formData: {
     name: "",
-    price: undefined as number | undefined,
-    buyout_price: undefined as number | undefined,
+    price: undefined,
+    buyout_price: undefined,
     category: "",
     end_time: "",
-  });
-  const [files, setFiles] = useState<File[]>([]);
-  const [imageList, setImageList] = useState<string[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [submissionStatus, setSubmissionStatus] = useState<
-    "idle" | "uploading" | "submitting" | "success" | "error"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  },
+  files: [],
+  imageList: [],
+  previewUrls: [],
+  submissionStatus: "idle",
+  error: null,
+  currentUser: null,
+};
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "UPDATE_FIELD":
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.field]:
+            action.field === "price" || action.field === "buyout_price"
+              ? Number(action.value)
+              : action.value,
+        },
+      };
+    case "SET_FILES":
+      return { ...state, files: action.files };
+    case "ADD_PREVIEW_URLS":
+      return { ...state, previewUrls: [...state.previewUrls, ...action.urls] };
+    case "REMOVE_PREVIEW":
+      // Revoke the URL to prevent memory leak
+      URL.revokeObjectURL(state.previewUrls[action.index]);
+      return {
+        ...state,
+        previewUrls: state.previewUrls.filter((_, i) => i !== action.index),
+        files:
+          action.index < state.files.length
+            ? state.files.filter((_, i) => i !== action.index)
+            : state.files,
+      };
+    case "REMOVE_IMAGE":
+      return {
+        ...state,
+        imageList: state.imageList.filter((_, i) => i !== action.index),
+      };
+    case "SET_STATUS":
+      return { ...state, submissionStatus: action.status };
+    case "SET_ERROR":
+      return { ...state, error: action.error };
+    case "SET_CURRENT_USER":
+      return { ...state, currentUser: action.user };
+    case "RESET_FORM":
+      return initialState;
+    default:
+      return state;
+  }
+}
+
+// Changed the component to be a proper Next.js page component without props
+export default function CreateAuctionPage() {
+  const router = useRouter();
+  const [state, dispatch] = useReducer(formReducer, initialState);
+  const {
+    formData,
+    files,
+    imageList,
+    previewUrls,
+    submissionStatus,
+    error,
+    currentUser,
+  } = state;
 
   useEffect(() => {
-    const fetchData = async () => {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        setCurrentUser(username);
-      } else {
-        window.location.href = "/auth";
-      }
-    };
+    const userId = sessionStorage.getItem("user_id");
+    if (!userId) {
+      router.push("/auth");
+      return;
+    }
 
-    fetchData();
+    const username = sessionStorage.getItem("username");
+    if (username) {
+      dispatch({ type: "SET_CURRENT_USER", user: username });
+    } else {
+      router.push("/auth");
+    }
+
+    // Clean up object URLs when component unmounts
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, []);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "price" || name === "buyout_price" ? Number(value) : value,
-    }));
+    dispatch({ type: "UPDATE_FIELD", field: name, value });
   };
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
     if (selectedFiles.length + imageList.length > 5) {
-      setError("You can upload a maximum of 5 images");
+      dispatch({
+        type: "SET_ERROR",
+        error: "You can upload a maximum of 5 images",
+      });
       return;
     }
 
@@ -77,50 +163,80 @@ const Trade: React.FC<TradeProps> = () => {
     const newPreviewUrls = selectedFiles.map((file) =>
       URL.createObjectURL(file)
     );
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
 
-    setFiles(selectedFiles);
+    dispatch({ type: "SET_FILES", files: selectedFiles });
+    dispatch({ type: "ADD_PREVIEW_URLS", urls: newPreviewUrls });
+    dispatch({ type: "SET_ERROR", error: null });
   };
 
-  // Function to remove preview image
   const removePreview = (indexToRemove: number) => {
-    setPreviewUrls((prev) => {
-      // Revoke the object URL to avoid memory leaks
-      URL.revokeObjectURL(prev[indexToRemove]);
-      return prev.filter((_, index) => index !== indexToRemove);
-    });
+    dispatch({ type: "REMOVE_PREVIEW", index: indexToRemove });
 
-    // Also remove the file from the files array if it's a newly selected file
-    if (indexToRemove < files.length) {
-      setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
-    } else {
-      // If it's an already uploaded image
+    // If it's an already uploaded image
+    if (indexToRemove >= files.length) {
       const adjustedIndex = indexToRemove - files.length;
-      removeImage(adjustedIndex);
+      dispatch({ type: "REMOVE_IMAGE", index: adjustedIndex });
     }
   };
 
-  // Clean up object URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, []);
-
-  const handleMasterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validate form fields
+  const validateForm = (): boolean => {
     const { name, price, buyout_price, category, end_time } = formData;
-    if (!name || !price || !buyout_price || !category || !end_time) {
-      setError("Please fill in all fields");
-      return;
+
+    if (!name?.trim()) {
+      dispatch({ type: "SET_ERROR", error: "Name is required" });
+      return false;
     }
 
-    // If no files selected and no images uploaded
+    if (!price) {
+      dispatch({ type: "SET_ERROR", error: "Starting price is required" });
+      return false;
+    }
+
+    if (!buyout_price) {
+      dispatch({ type: "SET_ERROR", error: "Buyout price is required" });
+      return false;
+    }
+
+    if (buyout_price <= price) {
+      dispatch({
+        type: "SET_ERROR",
+        error: "Buyout price must be higher than starting price",
+      });
+      return false;
+    }
+
+    if (!category) {
+      dispatch({ type: "SET_ERROR", error: "Category is required" });
+      return false;
+    }
+
+    if (!end_time) {
+      dispatch({ type: "SET_ERROR", error: "End time is required" });
+      return false;
+    }
+
+    const endDateTime = new Date(end_time);
+    if (endDateTime <= new Date()) {
+      dispatch({ type: "SET_ERROR", error: "End time must be in the future" });
+      return false;
+    }
+
     if (files.length === 0 && imageList.length === 0) {
-      setError("Please upload at least one image");
+      dispatch({
+        type: "SET_ERROR",
+        error: "Please upload at least one image",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleMasterSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    dispatch({ type: "SET_ERROR", error: null });
+
+    if (!validateForm()) {
       return;
     }
 
@@ -128,10 +244,10 @@ const Trade: React.FC<TradeProps> = () => {
       // Upload images if there are new files
       let uploadedImageUrls = [...imageList];
       if (files.length > 0) {
-        setSubmissionStatus("uploading");
+        dispatch({ type: "SET_STATUS", status: "uploading" });
 
         const uploadPromises = files.map(async (file) => {
-          const fileName = `${Date.now()}_${file.name}`;
+          const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
           const { data, error } = await supabase.storage
             .from("auction-images")
             .upload(`public/${fileName}`, file);
@@ -146,14 +262,24 @@ const Trade: React.FC<TradeProps> = () => {
           return publicUrlData.publicUrl;
         });
 
-        uploadedImageUrls = [
-          ...imageList,
-          ...(await Promise.all(uploadPromises)),
-        ];
+        try {
+          const newUrls = await Promise.all(uploadPromises);
+          uploadedImageUrls = [...imageList, ...newUrls];
+        } catch (uploadError) {
+          throw new Error(
+            `Error uploading images: ${
+              uploadError instanceof Error
+                ? uploadError.message
+                : String(uploadError)
+            }`
+          );
+        }
       }
 
       // Store form data with image URLs
-      setSubmissionStatus("submitting");
+      dispatch({ type: "SET_STATUS", status: "submitting" });
+      const { name, price, buyout_price, category, end_time } = formData;
+
       const { error: insertError } = await supabase.from("Auction").insert([
         {
           name,
@@ -165,28 +291,26 @@ const Trade: React.FC<TradeProps> = () => {
           status: "active",
           highest_bid: null,
           highest_bidder: null,
-          owner: currentUser, // Add owner field
+          owner: currentUser,
         },
       ]);
 
       if (insertError)
         throw new Error(`Failed to save auction: ${insertError.message}`);
 
-      setSubmissionStatus("success");
+      dispatch({ type: "SET_STATUS", status: "success" });
       setTimeout(() => {
-        window.location.href = "/auction";
+        router.push("/auction");
       }, 1000);
     } catch (err) {
       console.error("Error:", err);
-      setSubmissionStatus("error");
-      setError(
-        err instanceof Error ? err.message : "An unexpected error occurred"
-      );
+      dispatch({ type: "SET_STATUS", status: "error" });
+      dispatch({
+        type: "SET_ERROR",
+        error:
+          err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
-  };
-
-  const removeImage = (indexToRemove: number) => {
-    setImageList((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const getButtonText = () => {
@@ -232,6 +356,7 @@ const Trade: React.FC<TradeProps> = () => {
             onChange={handleInputChange}
             placeholder="Starting Price"
             required
+            min="1"
           />
           <InputField
             type="number"
@@ -240,6 +365,7 @@ const Trade: React.FC<TradeProps> = () => {
             onChange={handleInputChange}
             placeholder="Buyout Price"
             required
+            min={formData.price ? formData.price + 1 : "1"}
           />
           <SelectField
             name="category"
@@ -258,6 +384,7 @@ const Trade: React.FC<TradeProps> = () => {
             value={formData.end_time}
             onChange={handleInputChange}
             placeholder="End Time"
+            min={new Date().toISOString().slice(0, 16)}
             required
           />
           <div className="border border-dashed border-[#878787] p-4 rounded">
@@ -268,10 +395,14 @@ const Trade: React.FC<TradeProps> = () => {
               className="w-full cursor-pointer mb-2"
               accept="image/*"
               disabled={
-                submissionStatus === "uploading" || imageList.length >= 5
+                submissionStatus === "uploading" ||
+                submissionStatus === "submitting" ||
+                imageList.length + files.length >= 5
               }
             />
-            <p className="text-[#878787] text-sm mt-2">Upload up to 5 images</p>
+            <p className="text-[#878787] text-sm mt-2">
+              Upload up to 5 images ({imageList.length + files.length}/5)
+            </p>
           </div>
           <button
             type="submit"
@@ -297,7 +428,7 @@ const Trade: React.FC<TradeProps> = () => {
             <div className="grid grid-cols-4 gap-2">
               {previewUrls.map((previewUrl, index) => (
                 <ImagePreview
-                  key={index}
+                  key={`preview-${index}`}
                   image={previewUrl}
                   onRemove={() => removePreview(index)}
                 />
@@ -314,7 +445,7 @@ const Trade: React.FC<TradeProps> = () => {
       {error && <p className="text-red-500 ml-12 mt-4">{error}</p>}
     </>
   );
-};
+}
 
 // Reusable InputField Component
 const InputField = ({
@@ -324,7 +455,16 @@ const InputField = ({
   onChange,
   placeholder,
   required,
-}: any) => (
+  min,
+}: {
+  type: string;
+  name: string;
+  value: string | number;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  required: boolean;
+  min?: string | number;
+}) => (
   <input
     type={type}
     name={name}
@@ -333,11 +473,24 @@ const InputField = ({
     placeholder={placeholder}
     className="w-full p-3 bg-[#171717] border border-[#878787] rounded focus:border-white focus:outline-none transition-colors placeholder-[#878787]"
     required={required}
+    min={min}
   />
 );
 
 // Reusable SelectField Component
-const SelectField = ({ name, value, onChange, options, required }: any) => (
+const SelectField = ({
+  name,
+  value,
+  onChange,
+  options,
+  required,
+}: {
+  name: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  options: Array<{ value: string; label: string; disabled?: boolean }>;
+  required: boolean;
+}) => (
   <select
     name={name}
     value={value}
@@ -345,7 +498,7 @@ const SelectField = ({ name, value, onChange, options, required }: any) => (
     className="w-full p-3 bg-[#171717] border border-[#878787] rounded focus:border-white focus:outline-none transition-colors placeholder-[#878787]"
     required={required}
   >
-    {options.map((option: any) => (
+    {options.map((option) => (
       <option
         key={option.value}
         value={option.value}
@@ -357,17 +510,22 @@ const SelectField = ({ name, value, onChange, options, required }: any) => (
   </select>
 );
 
-const ImagePreview = ({ image, onRemove }: any) => (
+const ImagePreview = ({
+  image,
+  onRemove,
+}: {
+  image: string;
+  onRemove: () => void;
+}) => (
   <div className="relative group">
     <img src={image} alt="uploaded" className="w-full h-40 object-cover" />
     <button
       onClick={onRemove}
       className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
       aria-label="Remove image"
+      type="button"
     >
       <Trash2 size={24} />
     </button>
   </div>
 );
-
-export default Trade;

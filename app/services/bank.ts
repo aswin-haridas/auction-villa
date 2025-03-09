@@ -1,3 +1,4 @@
+"use client";
 import { supabase } from "./client";
 
 export const getWalletBalance = async (): Promise<number> => {

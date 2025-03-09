@@ -3,15 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { anton } from "../font/fonts";
 import { getWalletBalance } from "../services/bank";
+
 const Bank: React.FC = () => {
   const [balance, setBalance] = useState<number>(0);
-  const userId = sessionStorage.getItem("user_id");
 
+  // Move sessionStorage access into useEffect (runs only in browser)
   useEffect(() => {
-    if (!userId) {
+    const storedUserId = sessionStorage.getItem("user_id");
+
+    if (!storedUserId) {
       window.location.href = "/auth";
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     getWalletBalance().then((balance) => {

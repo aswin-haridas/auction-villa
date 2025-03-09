@@ -1,3 +1,4 @@
+"use client"
 import { supabase } from "./client";
 
 const isBrowser = typeof window !== "undefined";

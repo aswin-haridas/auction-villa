@@ -16,15 +16,21 @@ interface Paintings {
 
 function Auction() {
   const [paintings, setPaintings] = useState<Paintings[]>([]);
-  const userId = sessionStorage.getItem("user_id");
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Move sessionStorage access into useEffect
   useEffect(() => {
-    if (!userId) {
+    const storedUserId = sessionStorage.getItem("user_id");
+    setUserId(storedUserId);
+
+    if (!storedUserId) {
       window.location.href = "/auth";
     }
-  }, [userId]);
+  }, []);
 
   const fetchPaintings = useCallback(async () => {
+    if (!userId) return; // Avoid fetching until userId is available
+
     const { data, error } = await supabase
       .from("Painting")
       .select("*")
@@ -35,7 +41,7 @@ function Auction() {
     } else {
       setPaintings(data as Paintings[]);
     }
-  }, []);
+  }, [userId]); // Add userId as a dependency
 
   useEffect(() => {
     fetchPaintings();
