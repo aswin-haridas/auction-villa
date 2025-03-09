@@ -7,7 +7,7 @@ import { supabase } from "@/app/services/client";
 import React from "react";
 
 interface Paintings {
-  painting_id: string;
+  id: number;
   image: string[];
   name: string;
   price: number;
@@ -43,7 +43,7 @@ function Auction() {
 
   const paintingList = useMemo(() => {
     return paintings.map((painting) => (
-      <Link key={painting.painting_id} href={`/basement/${painting.painting_id}`}>
+      <Link key={painting.id} href={`/bidding/${painting.id}`}>
         <Card
           image={painting.image && painting.image[0] ? painting.image[0] : ""}
           name={painting.name}
