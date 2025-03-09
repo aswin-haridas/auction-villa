@@ -22,21 +22,3 @@ export async function loginUser(
   return data.user_id;
 }
 
-async function logoutUser(): Promise<void> {
-  if (isBrowser) {
-    sessionStorage.removeItem("user_id");
-    sessionStorage.removeItem("username");
-  }
-}
-
-function getCurrentUser(): {
-  userId: string | null;
-  username: string | null;
-} {
-  if (!isBrowser) return { userId: null, username: null };
-
-  return {
-    userId: sessionStorage.getItem("user_id"),
-    username: sessionStorage.getItem("username"),
-  };
-}

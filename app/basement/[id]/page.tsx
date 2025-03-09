@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getPainting } from "@/app/services/painting";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { getPainting } from "@/app/services/painting";
 
 interface Painting {
   painting_id: string;

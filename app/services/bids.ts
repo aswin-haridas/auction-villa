@@ -109,27 +109,3 @@ export function subscribeToBids(
   };
 }
 
-async function closeAuction(auctionId: string): Promise<void> {
-  const { data: auction, error } = await supabase
-    .from("Auction")
-    .select("status, end_time, highest_bidder, highest_bid")
-    .eq("id", auctionId)
-    .single();
-
-  if (error) throw new Error(`Failed to fetch auction: ${error.message}`);
-  if (auction.status !== "active" || new Date() < new Date(auction.end_time))
-    return;
-
-  const { error: updateError } = await supabase
-    .from("Auction")
-    .update({ status: "closed" })
-    .eq("id", auctionId);
-
-  if (updateError)
-    throw new Error(`Failed to close auction: ${updateError.message}`);
-
-  if (auction.highest_bidder) {
-    await winAuction(auctionId, auction.highest_bidder, auction.highest_bid);
-  }
-}
-

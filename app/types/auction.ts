@@ -22,38 +22,3 @@ export interface Bid {
   timestamp: string;
   username: string;
 }
-
-// Props for AuctionDetails component
-interface AuctionDetailsProps {
-  auction: Auction;
-  bids: Bid[];
-  currentUser: string | null;
-  username: string | null;
-  setAuction: React.Dispatch<React.SetStateAction<Auction | null>>;
-  setBids: React.Dispatch<React.SetStateAction<Bid[]>>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-// Props for AuctionImages component
-interface AuctionImagesProps {
-  images: string[];
-}
-
-// Props for BidHistory component
-interface BidHistoryProps {
-  bids: Bid[]; // Uses the same Bid interface, where username is optional
-}
-
-// Props for BiddingControls component
-interface BiddingControlsProps {
-  auction: Auction;
-  currentUser: string | null;
-  username: string | null;
-  setAuction: React.Dispatch<React.SetStateAction<Auction | null>>;
-  setBids: React.Dispatch<React.SetStateAction<Bid[]>>;
-}
-
-interface User {
-  user_id: string;
-  username: string;
-}

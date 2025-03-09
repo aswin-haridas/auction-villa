@@ -1,36 +1,6 @@
 import { supabase } from "./client";
 import { Auction } from "@/app/types/auction";
 
-async function createAuction(
-  name: string,
-  image: string[],
-  price: number,
-  buyoutPrice: number,
-  category: string,
-  endTime: string, // ISO string for timestamp
-  owner: string
-): Promise<string> {
-  const { data, error } = await supabase
-    .from("Auction")
-    .insert({
-      name,
-      image,
-      price,
-      buyout_price: buyoutPrice,
-      status: "active",
-      highest_bid: null,
-      highest_bidder: null,
-      category,
-      end_time: endTime,
-      owner,
-    })
-    .select("id")
-    .single();
-
-  if (error) throw new Error(`Failed to create auction: ${error.message}`);
-  return data.id;
-}
-
 // Get auctions with optional status filter
 export async function getAuctions(
   status?: "active" | "closed"
