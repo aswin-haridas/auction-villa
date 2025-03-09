@@ -6,7 +6,6 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
 import Header from "./components/Header";
-import { getUserId } from "./services/auth";
 
 interface Paintings {
   id: number;
@@ -18,7 +17,13 @@ interface Paintings {
 
 function Auction() {
   const [paintings, setPaintings] = useState<Paintings[]>([]);
-  const userId = getUserId();
+  const userId = sessionStorage.getItem("user_id");
+
+  useEffect(() => {
+    if (!userId) {
+      window.location.href = "/auth";
+    }
+  }, [userId]);
 
   const fetchPaintings = useCallback(async () => {
     const { data, error } = await supabase
@@ -51,11 +56,9 @@ function Auction() {
 
   return (
     <>
-      <Header />
-
       <div className="px-12">
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
-          Paintings
+          Your Holdings
         </p>
         <div className="grid grid-cols-5 pt-8">{paintingList}</div>
       </div>

@@ -7,7 +7,7 @@ export interface Auction {
   owner: string;
   highest_bid: number | null;
   highest_bidder: string | null;
-  buyout_price: number | null;
+  buyout_price: number;
   image: string[];
   category: string;
   status: string;

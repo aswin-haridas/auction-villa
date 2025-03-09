@@ -8,6 +8,10 @@ export const getWalletBalance = async (): Promise<number> => {
     .eq("user_id", user_id)
     .single();
 
+  if (data) {
+    sessionStorage.setItem("balance", data.balance);
+  }
+
   if (error || !data) throw error || new Error("No data found");
 
   return data.balance;
@@ -35,7 +39,13 @@ export const updateBalance = async (
     .eq("user_id", user_id)
     .single();
 
+    if (updatedData) {
+      sessionStorage.setItem("balance", data.balance);
+    }
+
   if (updateError) throw updateError;
+
+
 
   return updatedData;
 };

@@ -7,7 +7,7 @@ interface CardProps {
   category: string;
 }
 
-const Card = ({ image, name, category }: CardProps) => (
+const AtomCard = ({ image, name, category }: CardProps) => (
   <div className="relative w-[250px] cursor-pointer hover:underline hover:underline-offset-2">
     <div className="w-full mb-2">
       {image && (
@@ -23,4 +23,4 @@ const Card = ({ image, name, category }: CardProps) => (
   </div>
 );
 
-export default Card;
+export default AtomCard;

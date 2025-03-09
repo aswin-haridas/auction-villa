@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { checkAuth } from "../services/auth";
+import { loginUser } from "../services/user";
 
 const AccessPage = () => {
   const [username, setUsername] = useState("");
@@ -12,11 +12,9 @@ const AccessPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const isAuthenticated = await checkAuth(username, password);
+    const user_id = await loginUser(username, password);
 
-    if (isAuthenticated) {
-      // Store username in sessionStorage before redirecting
-      sessionStorage.setItem("username", username);
+    if (user_id) {
       router.push("/");
     } else {
       setError("Invalid credentials");

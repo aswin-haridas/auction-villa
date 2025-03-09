@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const symbols = ["𖤐", "𖤍", "⁶⁶⁶", "🕇"];
 
@@ -9,6 +9,12 @@ const Header: React.FC = () => {
   const [symbol, setSymbol] = useState<string>("");
   const [username, setUsername] = useState<string | null>("");
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Don't show header on auth page
+  if (pathname === "/auth") {
+    return null;
+  }
 
   useEffect(() => {
     const checkUsername = () => {
@@ -46,7 +52,7 @@ const Header: React.FC = () => {
     <div className="w-full h-14 flex items-center pt-4 px-12 ">
       <div className="text-[#ba3737] flex-1">{symbol}</div>
       <div className="flex justify-around flex-1">
-        {["Basement", "Auction", "Trade", "Bank"].map((item, idx) => (
+        {["Basement", "Auction", "Create", "Bank"].map((item, idx) => (
           <Link
             key={idx}
             href={

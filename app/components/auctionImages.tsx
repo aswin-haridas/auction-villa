@@ -9,8 +9,8 @@ export default function AuctionImages({ images }: AuctionImagesProps) {
   const [currentImage, setCurrentImage] = useState(0);
 
   return (
-    <div className="flex">
-      <div className="flex flex-col pr-2 space-y-2">
+    <div className="flex h-full w-[85%]">
+      <div className="flex flex-col pr-2 space-y-2 max-h-[80vh] overflow-y-auto">
         {images.map((img, i) => (
           <Image
             key={i}
@@ -19,21 +19,22 @@ export default function AuctionImages({ images }: AuctionImagesProps) {
             src={img}
             width={100}
             height={100}
-            className={`h-28 flex cursor-pointer ${
+            className={` grow cursor-pointer ${
               currentImage !== i && "opacity-50 grayscale"
             }`}
             style={{ objectFit: "cover" }}
           />
         ))}
       </div>
-      <Image
-        src={images[currentImage]}
-        alt={`Current Image`}
-        width={500}
-        height={500}
-        priority
-        className="object-cover h-[76vh]"
-      />
+      <div className="flex-grow h-[80vh] relative">
+        <Image
+          src={images[currentImage]}
+          alt={`Current Image`}
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
     </div>
   );
 }

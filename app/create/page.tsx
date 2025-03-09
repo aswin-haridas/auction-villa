@@ -3,7 +3,6 @@ import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
-import { getUsername, goToLogin } from "../services/auth";
 import Header from "../components/Header";
 
 interface TradeProps {
@@ -20,6 +19,14 @@ interface TradeProps {
 }
 
 const Trade: React.FC<TradeProps> = () => {
+  const userId = sessionStorage.getItem("user_id");
+
+  useEffect(() => {
+    if (!userId) {
+      window.location.href = "/auth";
+    }
+  }, [userId]);
+
   const [formData, setFormData] = useState({
     name: "",
     price: undefined as number | undefined,
@@ -29,6 +36,7 @@ const Trade: React.FC<TradeProps> = () => {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [imageList, setImageList] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [submissionStatus, setSubmissionStatus] = useState<
     "idle" | "uploading" | "submitting" | "success" | "error"
   >("idle");
@@ -37,11 +45,12 @@ const Trade: React.FC<TradeProps> = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const userId = await getUsername();
+      const userId = sessionStorage.getItem("user_id");
       if (userId) {
         setCurrentUser(userId);
       } else {
-        goToLogin();
+        //go to login
+        window.location.href = "/auth";
       }
     };
 
@@ -65,8 +74,40 @@ const Trade: React.FC<TradeProps> = () => {
       setError("You can upload a maximum of 5 images");
       return;
     }
+
+    // Generate preview URLs for the selected files
+    const newPreviewUrls = selectedFiles.map((file) =>
+      URL.createObjectURL(file)
+    );
+    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+
     setFiles(selectedFiles);
   };
+
+  // Function to remove preview image
+  const removePreview = (indexToRemove: number) => {
+    setPreviewUrls((prev) => {
+      // Revoke the object URL to avoid memory leaks
+      URL.revokeObjectURL(prev[indexToRemove]);
+      return prev.filter((_, index) => index !== indexToRemove);
+    });
+
+    // Also remove the file from the files array if it's a newly selected file
+    if (indexToRemove < files.length) {
+      setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+    } else {
+      // If it's an already uploaded image
+      const adjustedIndex = indexToRemove - files.length;
+      removeImage(adjustedIndex);
+    }
+  };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const handleMasterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,28 +187,6 @@ const Trade: React.FC<TradeProps> = () => {
     }
   };
 
-  const fetchImages = async () => {
-    try {
-      const { data, error } = await supabase.from("Auction").select("image");
-
-      if (error) {
-        console.error("Error fetching images:", error);
-        return;
-      }
-
-      if (data) {
-        const allImages = data.flatMap((item) => item.image);
-        setImageList(allImages);
-      }
-    } catch (error) {
-      console.error("Unexpected error fetching images:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
   const removeImage = (indexToRemove: number) => {
     setImageList((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
@@ -189,8 +208,6 @@ const Trade: React.FC<TradeProps> = () => {
 
   return (
     <>
-      <Header />
-
       <div className="px-12">
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Create auction
@@ -278,13 +295,13 @@ const Trade: React.FC<TradeProps> = () => {
         </form>
 
         <div className="w-7/12 pl-8 pr-16">
-          {imageList.length > 0 ? (
+          {previewUrls.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
-              {imageList.map((image, index) => (
+              {previewUrls.map((previewUrl, index) => (
                 <ImagePreview
                   key={index}
-                  image={image}
-                  onRemove={() => removeImage(index)}
+                  image={previewUrl}
+                  onRemove={() => removePreview(index)}
                 />
               ))}
             </div>
