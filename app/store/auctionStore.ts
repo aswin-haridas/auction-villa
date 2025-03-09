@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Auction, Bid } from "@/app/types/auction";
-import { getAuction } from "@/app/services/auction";
-import { getBids } from "@/app/services/bids";
+import { getAuction, checkAuctionActive } from "@/app/services/auction";
+import { getBids, placeBid as placeBidApi } from "@/app/services/bids";
 
 interface AuctionState {
   auction: Auction | null;
@@ -10,6 +10,7 @@ interface AuctionState {
   bidAmount: string;
   selectedValue: number | null;
   loading: boolean;
+  isAuctionActive: boolean; // Add this to track auction status
 
   // Actions
   fetchAuction: (auctionId: string) => Promise<void>;
@@ -21,6 +22,7 @@ interface AuctionState {
     username: string
   ) => Promise<void>;
   resetBidInputs: () => void;
+  checkAuctionStatus: (auctionId: string) => Promise<void>; // Add this method
 }
 
 export const useAuctionStore = create<AuctionState>((set, get) => ({
@@ -30,17 +32,22 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
   bidAmount: "",
   selectedValue: null,
   loading: false,
+  isAuctionActive: true,
 
   fetchAuction: async (auctionId: string) => {
     set({ isLoading: true });
     try {
-      const fetchedAuction = await getAuction(auctionId);
-      const fetchedBids = await getBids(auctionId);
+      const [fetchedAuction, fetchedBids, isActive] = await Promise.all([
+        getAuction(auctionId),
+        getBids(auctionId),
+        checkAuctionActive(auctionId),
+      ]);
 
       set({
         auction: fetchedAuction,
         bids: fetchedBids,
         isLoading: false,
+        isAuctionActive: isActive,
       });
     } catch (error) {
       console.error("Error fetching auction data:", error);
@@ -63,31 +70,38 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
 
     set({ loading: true });
     try {
-      // Here you would make an API call to place the bid
-      // This is a mockup - replace with your actual API call
-      const newBid: Bid = {
-        bid_id: Date.now().toString(),
-        auction_id: auctionId,
-        user_id: userId,
-        username: username,
-        amount: bidValue,
-        timestamp: new Date().toISOString(),
-      };
+      // Call the actual API function to place the bid
+      await placeBidApi(userId, auctionId, bidValue);
 
-      // Assuming we got a successful response
-      // Add the new bid to the bids list
-      set((state) => ({
-        bids: [newBid, ...state.bids],
+      // After successful API call, fetch both the latest bids and updated auction
+      const [updatedBids, updatedAuction] = await Promise.all([
+        getBids(auctionId),
+        getAuction(auctionId),
+      ]);
+
+      set({
+        bids: updatedBids,
+        auction: updatedAuction,
         loading: false,
-      }));
+      });
 
       // Reset bid inputs
       get().resetBidInputs();
     } catch (error) {
       console.error("Error placing bid:", error);
+      alert(error instanceof Error ? error.message : "Failed to place bid");
       set({ loading: false });
     }
   },
 
   resetBidInputs: () => set({ bidAmount: "", selectedValue: null }),
+
+  checkAuctionStatus: async (auctionId: string) => {
+    try {
+      const isActive = await checkAuctionActive(auctionId);
+      set({ isAuctionActive: isActive });
+    } catch (error) {
+      console.error("Error checking auction status:", error);
+    }
+  },
 }));

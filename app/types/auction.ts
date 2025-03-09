@@ -2,24 +2,24 @@
 export interface Auction {
   id: string;
   name: string;
+  image: string[];];
   price: number;
+  buyout_price: number;number;
+  status: string;
+  highest_bid: number | null;
+  highest_bidder: string | null;g | null;
+  category: string;;
   end_time: string;
   owner: string;
-  highest_bid: number | null;
-  highest_bidder: string | null;
-  buyout_price: number;
-  image: string[];
-  category: string;
-  status: string;
 }
 
 export interface Bid {
   bid_id: string;
-  user_id: string;
+  auction_id: string;ng;
+  user_id: string;;
   amount: number;
   timestamp: string;
-  auction_id: string;
-  username: string; // Ensure it's always a string
+  username: string;
 }
 
 // Props for AuctionDetails component
