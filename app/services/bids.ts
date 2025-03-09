@@ -74,6 +74,42 @@ export async function getBids(auctionId: string): Promise<Bid[]> {
   return data as Bid[];
 }
 
+export function subscribeToBids(
+  auctionId: string,
+  callback: (bids: Bid[]) => void
+) {
+  // First, get initial bids
+  getBids(auctionId).then(callback).catch(console.error);
+
+  // Then subscribe to changes
+  const subscription = supabase
+    .channel(`auction-bids-${auctionId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*", // Listen to all events (insert, update, delete)
+        schema: "public",
+        table: "Bid",
+        filter: `auction_id=eq.${auctionId}`,
+      },
+      async () => {
+        // When we get any update, fetch all bids again to ensure we have the latest state
+        try {
+          const updatedBids = await getBids(auctionId);
+          callback(updatedBids);
+        } catch (error) {
+          console.error("Error fetching updated bids:", error);
+        }
+      }
+    )
+    .subscribe();
+
+  // Return unsubscribe function
+  return () => {
+    subscription.unsubscribe();
+  };
+}
+
 export async function closeAuction(auctionId: string): Promise<void> {
   const { data: auction, error } = await supabase
     .from("Auction")

@@ -49,6 +49,44 @@ export async function getAuction(auctionId: string): Promise<Auction> {
   return data as Auction;
 }
 
+export function subscribeToAuction(
+  auctionId: string,
+  callback: (auction: Auction) => void
+) {
+  // First, get initial auction data
+  getAuction(auctionId).then(callback).catch(console.error);
+
+  // Then subscribe to changes
+  const subscription = supabase
+    .channel(`auction-details-${auctionId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*", // Listen to all events (insert, update, delete)
+        schema: "public",
+        table: "Auction",
+        filter: `id=eq.${auctionId}`,
+      },
+      (payload) => {
+        // Use the payload directly instead of fetching again
+        if (payload.eventType === "DELETE") {
+          console.log("Auction was deleted");
+          return;
+        }
+
+        // For INSERT and UPDATE events, the new record is in payload.new
+        const updatedAuction = payload.new as Auction;
+        callback(updatedAuction);
+      }
+    )
+    .subscribe();
+
+  // Return unsubscribe function
+  return () => {
+    subscription.unsubscribe();
+  };
+}
+
 export async function checkAuctionActive(auctionId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("Auction")

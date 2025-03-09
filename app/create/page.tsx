@@ -3,7 +3,6 @@ import { anton } from "../font/fonts";
 import { useState, ChangeEvent, useEffect } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
-import Header from "../components/Header";
 
 interface TradeProps {
   id?: string;
@@ -45,11 +44,10 @@ const Trade: React.FC<TradeProps> = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const userId = sessionStorage.getItem("user_id");
-      if (userId) {
-        setCurrentUser(userId);
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        setCurrentUser(username);
       } else {
-        //go to login
         window.location.href = "/auth";
       }
     };
