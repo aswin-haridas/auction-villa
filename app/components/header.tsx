@@ -11,11 +11,6 @@ const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Don't show header on auth page
-  if (pathname === "/auth") {
-    return null;
-  }
-
   useEffect(() => {
     const checkUsername = () => {
       const storedUsername = sessionStorage.getItem("username");
@@ -47,6 +42,11 @@ const Header: React.FC = () => {
     setUsername(null);
     router.push("/auth");
   };
+
+  // Don't show header on auth page
+  if (pathname === "/auth") {
+    return null;
+  }
 
   return (
     <div className="w-full h-14 flex items-center pt-4 px-12 ">

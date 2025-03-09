@@ -45,8 +45,10 @@ export default function AuctionPage() {
 
   useEffect(() => {
     // Get user info from localStorage
-    setCurrentUser(localStorage.getItem("userId"));
-    setUsername(localStorage.getItem("username"));
+    setCurrentUser(sessionStorage.getItem("user_id"));
+    setUsername(sessionStorage.getItem("username"));
+
+    console.log(auctionId, username, currentUser);
 
     // Fetch auction data using Zustand action
     if (auctionId) {
@@ -64,6 +66,12 @@ export default function AuctionPage() {
     const bidValue = bidAmount ? parseInt(bidAmount) : selectedValue;
     if (!bidValue || isNaN(bidValue)) {
       alert("Please enter a valid bid amount");
+      return;
+    }
+
+    // Check if current user is already the highest bidder
+    if (sortedBids.length > 0 && sortedBids[0].username === username) {
+      alert("You are already the highest bidder!");
       return;
     }
 
