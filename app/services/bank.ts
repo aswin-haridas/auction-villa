@@ -17,7 +17,7 @@ export const getWalletBalance = async (): Promise<number> => {
   return data.balance;
 };
 
-export const updateBalance = async (
+const updateBalance = async (
   user_id: string,
   amount: number,
   type: "add" | "subtract"
@@ -50,7 +50,7 @@ export const updateBalance = async (
   return updatedData;
 };
 
-export const checkBalance = async (
+const checkBalance = async (
   user_id: string,
   amount: number
 ): Promise<any> => {

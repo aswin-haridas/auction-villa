@@ -24,7 +24,7 @@ export interface Bid {
 }
 
 // Props for AuctionDetails component
-export interface AuctionDetailsProps {
+interface AuctionDetailsProps {
   auction: Auction;
   bids: Bid[];
   currentUser: string | null;
@@ -35,17 +35,17 @@ export interface AuctionDetailsProps {
 }
 
 // Props for AuctionImages component
-export interface AuctionImagesProps {
+interface AuctionImagesProps {
   images: string[];
 }
 
 // Props for BidHistory component
-export interface BidHistoryProps {
+interface BidHistoryProps {
   bids: Bid[]; // Uses the same Bid interface, where username is optional
 }
 
 // Props for BiddingControls component
-export interface BiddingControlsProps {
+interface BiddingControlsProps {
   auction: Auction;
   currentUser: string | null;
   username: string | null;
@@ -53,7 +53,7 @@ export interface BiddingControlsProps {
   setBids: React.Dispatch<React.SetStateAction<Bid[]>>;
 }
 
-export interface User {
+interface User {
   user_id: string;
   username: string;
 }

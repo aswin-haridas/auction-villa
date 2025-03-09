@@ -9,7 +9,7 @@ interface Painting {
   owner: string;
 }
 
-export async function getPaintings(userId: string): Promise<Painting[]> {
+async function getPaintings(userId: string): Promise<Painting[]> {
   const { data, error } = await supabase
     .from("Painting")
     .select("*")

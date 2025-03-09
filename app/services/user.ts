@@ -22,14 +22,14 @@ export async function loginUser(
   return data.user_id;
 }
 
-export async function logoutUser(): Promise<void> {
+async function logoutUser(): Promise<void> {
   if (isBrowser) {
     sessionStorage.removeItem("user_id");
     sessionStorage.removeItem("username");
   }
 }
 
-export function getCurrentUser(): {
+function getCurrentUser(): {
   userId: string | null;
   username: string | null;
 } {

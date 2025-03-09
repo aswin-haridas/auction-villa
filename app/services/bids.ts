@@ -109,7 +109,7 @@ export function subscribeToBids(
   };
 }
 
-export async function closeAuction(auctionId: string): Promise<void> {
+async function closeAuction(auctionId: string): Promise<void> {
   const { data: auction, error } = await supabase
     .from("Auction")
     .select("status, end_time, highest_bidder, highest_bid")

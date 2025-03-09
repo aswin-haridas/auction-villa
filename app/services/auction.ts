@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import { Auction } from "@/app/types/auction";
 
-export async function createAuction(
+async function createAuction(
   name: string,
   image: string[],
   price: number,
