@@ -17,7 +17,6 @@ interface Painting {
 
 export default function PaintingPage() {
   const params = useParams();
-  const router = useRouter();
   const paintingId = params.id as string;
 
   const [painting, setPainting] = useState<Painting | null>(null);
