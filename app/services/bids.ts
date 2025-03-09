@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { Bid } from "../types/auction";
+import { winAuction } from "./auction";
 
 export async function placeBid(
   userId: string,
@@ -55,10 +56,8 @@ export async function placeBid(
 
   // Handle buyout
   if (amount >= auction.buyout_price) {
-    await supabase
-      .from("Auction")
-      .update({ status: "closed" })
-      .eq("id", auctionId);
+    // We're removing the automatic status update here
+    // This will only happen explicitly when user clicks buyout button
     await winAuction(auctionId, userId, amount);
   }
 }
@@ -134,60 +133,3 @@ export async function closeAuction(auctionId: string): Promise<void> {
   }
 }
 
-export async function winAuction(
-  auctionId: string,
-  winnerId: string,
-  amount: number
-): Promise<void> {
-  const { data: auction, error: auctionError } = await supabase
-    .from("Auction")
-    .select("owner, name, image, category")
-    .eq("id", auctionId)
-    .single();
-
-  if (auctionError)
-    throw new Error(`Failed to fetch auction: ${auctionError.message}`);
-
-  // Deduct from winner's balance
-  await supabase.rpc("update_balance", {
-    p_user_id: winnerId,
-    p_amount: -amount,
-  });
-
-  // Add to owner's balance
-  await supabase.rpc("update_balance", {
-    p_user_id: auction.owner,
-    p_amount: amount,
-  });
-
-  // Record transactions
-  const timestamp = new Date().toISOString();
-  await supabase.from("Transactions").insert([
-    {
-      user_id: winnerId,
-      type: "auction_win",
-      amount: -amount,
-      timestamp,
-      event: `Won auction ${auctionId}`,
-    },
-    {
-      user_id: auction.owner,
-      type: "auction_sale",
-      amount,
-      timestamp,
-      event: `Sold in auction ${auctionId}`,
-    },
-  ]);
-
-  // Create painting
-  const { error: paintingError } = await supabase.from("Painting").insert({
-    name: auction.name,
-    image: auction.image,
-    acquire_date: timestamp,
-    category: auction.category,
-    owner: winnerId,
-  });
-
-  if (paintingError)
-    throw new Error(`Failed to create painting: ${paintingError.message}`);
-}

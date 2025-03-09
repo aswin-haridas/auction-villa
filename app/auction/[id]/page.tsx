@@ -9,6 +9,7 @@ import {
   getAuction,
   subscribeToAuction,
   checkAuctionActive,
+  endAuction,
 } from "@/app/services/auction";
 import {
   getBids,
@@ -165,7 +166,21 @@ export default function AuctionPage() {
   };
 
   // Handle leave auction
-  const handleLeave = () => {
+  const handleLeave = async () => {
+    // End auction when leaving
+    if (isAuctionActive && auctionId) {
+      try {
+        // Pass winner info if there is a highest bidder
+        if (sortedBids.length > 0) {
+          const highestBid = sortedBids[0];
+          await endAuction(auctionId, highestBid.user_id, highestBid.username);
+        } else {
+          await endAuction(auctionId);
+        }
+      } catch (error) {
+        console.error("Error ending auction:", error);
+      }
+    }
     router.push("/");
   };
 
@@ -191,6 +206,12 @@ export default function AuctionPage() {
       setLoading(true);
       try {
         await placeBidService(currentUser, auctionId, auction.buyout_price);
+        // Explicitly end the auction after buyout and set current user as winner
+        if (currentUser && username) {
+          await endAuction(auctionId, currentUser, username);
+        } else {
+          await endAuction(auctionId);
+        }
         alert("Buyout successful!");
       } catch (error) {
         console.error("Error during buyout:", error);

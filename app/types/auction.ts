@@ -11,6 +11,7 @@ export interface Auction {
   category: string;
   end_time: string;
   owner: string;
+  winner: string | null;
 }
 
 export interface Bid {
