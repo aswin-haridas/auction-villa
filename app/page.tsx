@@ -5,7 +5,6 @@ import { anton } from "./font/fonts";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/app/services/client";
 import React from "react";
-import Header from "./components/Header";
 
 interface Paintings {
   painting_id: string;

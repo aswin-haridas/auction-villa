@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Header from "../components/Header";
 import { anton } from "../font/fonts";
 import { getWalletBalance } from "../services/bank";
 const Bank: React.FC = () => {
