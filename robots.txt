@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /
+
+# Specifically block Google
+User-agent: Googlebot
+Disallow: /
