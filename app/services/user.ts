@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import { supabase } from "./client";
 
 const isBrowser = typeof window !== "undefined";
 
 export async function loginUser(
   username: string,
-  password: string
+  password: string,
 ): Promise<string | null> {
   const { data, error } = await supabase
     .from("User")
@@ -22,4 +22,3 @@ export async function loginUser(
   if (error || !data) return null;
   return data.user_id;
 }
-

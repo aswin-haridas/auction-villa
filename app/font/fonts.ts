@@ -1,4 +1,4 @@
-import { Anton ,Playfair_Display} from "next/font/google";
+import { Anton, Playfair_Display } from "next/font/google";
 
 const anton = Anton({
   weight: "400",
@@ -10,5 +10,4 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-
-export { anton ,playfair };
+export { anton, playfair };

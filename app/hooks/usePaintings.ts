@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPaintings } from "../services/painting";
 
-export interface Painting {
+interface Painting {
   painting_id: number;
   image: string[];
   name: string;
@@ -26,7 +26,7 @@ export function usePaintings(userId: string | null) {
     } catch (err) {
       console.error("Error fetching paintings:", err);
       setError(
-        err instanceof Error ? err : new Error("Failed to fetch paintings")
+        err instanceof Error ? err : new Error("Failed to fetch paintings"),
       );
     } finally {
       setLoading(false);

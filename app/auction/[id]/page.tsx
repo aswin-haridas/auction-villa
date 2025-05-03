@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import AuctionImages from "@/app/components/auctionImages";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -158,7 +159,7 @@ export default function AuctionPage() {
       alert(
         `Failed to place bid: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     } finally {
       setLoading(false);
@@ -218,7 +219,7 @@ export default function AuctionPage() {
         alert(
           `Buyout failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
         );
       } finally {
         setLoading(false);

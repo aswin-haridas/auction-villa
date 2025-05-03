@@ -4,36 +4,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "knip": "knip"
+    "knip": "knip",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "autoprefixer": "10.4.20",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "iv-viewer": "^2.2.1",
     "lucide-react": "^0.475.0",
     "next": "latest",
     "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-dropzone": "^14.3.8",
-    "react-iv-viewer": "^1.0.3",
-    "react-medium-image-zoom": "^5.2.14",
-    "sharp": "^0.33.5",
-    "tailwind-merge": "^3.0.1",
-    "uuid": "^11.1.0",
-    "zustand": "^5.0.3"
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "19.0.2",
+    "eslint": "^9.26.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.0.0",
     "knip": "^5.44.1",
-    "mini-css-extract-plugin": "^2.9.2",
     "postcss": "8.4.49",
+    "prettier": "^3.5.3",
     "tailwindcss": "3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.31.1"
   }
 }

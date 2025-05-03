@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export default function PaintingPage() {
   const [painting, setPainting] = useState<Painting | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedGridImage, setSelectedGridImage] = useState<string | null>(
-    null
+    null,
   );
 
   // Fake stats for social media-like UI

@@ -1,22 +1,10 @@
 "use client";
+import React from "react";
 import { anton } from "../font/fonts";
 import { useEffect, useReducer, ChangeEvent, FormEvent } from "react";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../services/client";
 import { useRouter } from "next/navigation";
-
-interface AuctionData {
-  id?: string;
-  name: string;
-  price: number;
-  owner: string;
-  buyout_price: number;
-  category: string;
-  end_time: string;
-  status?: string;
-  highest_bid?: number;
-  highest_bidder?: string;
-}
 
 // Define state and actions for reducer
 interface FormState {
@@ -143,7 +131,7 @@ export default function CreateAuctionPage() {
   }, []);
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     dispatch({ type: "UPDATE_FIELD", field: name, value });
@@ -161,7 +149,7 @@ export default function CreateAuctionPage() {
 
     // Generate preview URLs for the selected files
     const newPreviewUrls = selectedFiles.map((file) =>
-      URL.createObjectURL(file)
+      URL.createObjectURL(file),
     );
 
     dispatch({ type: "SET_FILES", files: selectedFiles });
@@ -271,7 +259,7 @@ export default function CreateAuctionPage() {
               uploadError instanceof Error
                 ? uploadError.message
                 : String(uploadError)
-            }`
+            }`,
           );
         }
       }
@@ -414,8 +402,8 @@ export default function CreateAuctionPage() {
               submissionStatus === "success"
                 ? "bg-green-500"
                 : submissionStatus === "error"
-                ? "bg-red-500"
-                : ""
+                  ? "bg-red-500"
+                  : ""
             }`}
           >
             {getButtonText()}{" "}

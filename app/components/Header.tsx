@@ -30,7 +30,7 @@ const Header: React.FC = () => {
     changeSymbol();
     const interval = setInterval(
       changeSymbol,
-      Math.random() * (1200 - 500) + 500
+      Math.random() * (1200 - 500) + 500,
     );
 
     return () => clearInterval(interval);

@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import { anton } from "@/app/font/fonts";
+import React from "react";
 
 interface PaintingBadgesProps {
   category: string;

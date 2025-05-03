@@ -1,4 +1,4 @@
-import Image from "next/image";
+import React from "react";
 import { playfair } from "@/app/font/fonts";
 import { PaintingBadges } from "./PaintingBadges";
 import { ChevronRight } from "lucide-react";
@@ -13,7 +13,6 @@ interface PaintingHeaderProps {
 
 export function PaintingHeader({
   name,
-  image,
   category,
   acquireDate,
   likeCount,

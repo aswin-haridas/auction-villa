@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import Link from "next/link";
 import Card from "../components/AtomCard";
 import { anton } from "../font/fonts";
@@ -30,13 +31,13 @@ function AuctionPage() {
         const live = allAuctions.filter(
           (auction) =>
             auction.status === "active" &&
-            new Date(auction.end_time) > new Date()
+            new Date(auction.end_time) > new Date(),
         );
 
         const previous = allAuctions.filter(
           (auction) =>
             auction.status === "closed" ||
-            new Date(auction.end_time) <= new Date()
+            new Date(auction.end_time) <= new Date(),
         );
 
         setLiveAuctions(live);
