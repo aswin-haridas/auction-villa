@@ -24,7 +24,7 @@ interface FormState {
 }
 
 type FormAction =
-  | { type: "UPDATE_FIELD"; field: string; value: any }
+  | { type: "UPDATE_FIELD"; field: string; value: string | number }
   | { type: "SET_FILES"; files: File[] }
   | { type: "ADD_PREVIEW_URLS"; urls: string[] }
   | { type: "REMOVE_PREVIEW"; index: number }
@@ -131,7 +131,7 @@ export default function CreateAuctionPage() {
   }, []);
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     dispatch({ type: "UPDATE_FIELD", field: name, value });
@@ -149,7 +149,7 @@ export default function CreateAuctionPage() {
 
     // Generate preview URLs for the selected files
     const newPreviewUrls = selectedFiles.map((file) =>
-      URL.createObjectURL(file),
+      URL.createObjectURL(file)
     );
 
     dispatch({ type: "SET_FILES", files: selectedFiles });
@@ -236,7 +236,7 @@ export default function CreateAuctionPage() {
 
         const uploadPromises = files.map(async (file) => {
           const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-          const { data, error } = await supabase.storage
+          const { error } = await supabase.storage
             .from("auction-images")
             .upload(`public/${fileName}`, file);
 
@@ -259,7 +259,7 @@ export default function CreateAuctionPage() {
               uploadError instanceof Error
                 ? uploadError.message
                 : String(uploadError)
-            }`,
+            }`
           );
         }
       }
