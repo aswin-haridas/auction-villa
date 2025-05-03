@@ -5,19 +5,19 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { Auction, Bid } from "@/app/auction/auction";
+import { Auction, Bid } from "@/app/auction/types";
 import {
   getAuction,
   subscribeToAuction,
   checkAuctionActive,
   endAuction,
-} from "@/app/services/auction";
+} from "@/app/auction/services/auction";
 import {
   getBids,
   subscribeToBids,
   placeBid as placeBidService,
 } from "@/app/services/bids";
-import { getWalletBalance } from "@/app/services/bank";
+import { getWalletBalance } from "@/app/bank/services/bank";
 
 export default function AuctionPage() {
   const params = useParams();
@@ -44,7 +44,7 @@ export default function AuctionPage() {
   const biddingIncrements = [100, 500, 1000, 5000, 10000];
 
   // Colors for different users in the bid history
-  const userColors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3"];
+  const userColors = ["#FF5733", "#33FF57"];
 
   // Calculate highest bid and bidder
   const sortedBids = [...bids].sort((a, b) => b.amount - a.amount);

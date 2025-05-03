@@ -1,5 +1,5 @@
-import { supabase } from "./client";
-import { Auction } from "@/app/auction/auction";
+import { supabase } from "../../services/client";
+import { Auction } from "@/app/auction/types";
 
 // Get auctions with optional status filter
 export async function getAuctions(

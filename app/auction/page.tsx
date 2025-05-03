@@ -5,8 +5,8 @@ import Card from "../components/AtomCard";
 import { anton } from "../font/fonts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuctions } from "../services/auction";
-import { Auction } from "./auction";
+import { getAuctions } from "./services/auction";
+import { Auction } from "./types";
 
 function AuctionPage() {
   const router = useRouter();

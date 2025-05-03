@@ -1,6 +1,6 @@
 import { supabase } from "./client";
-import { Bid } from "../auction/auction";
-import { winAuction } from "./auction";
+import { Bid } from "../auction/types";
+import { winAuction } from "../auction/services/auction";
 
 export async function placeBid(
   userId: string,
@@ -65,7 +65,7 @@ export async function placeBid(
 export async function getBids(auctionId: string): Promise<Bid[]> {
   const { data, error } = await supabase
     .from("Bid")
-    .select("*")
+    .select("bid_id, auction_id, user_id, amount, timestamp, username")
     .eq("auction_id", auctionId)
     .order("timestamp", { ascending: false });
 
