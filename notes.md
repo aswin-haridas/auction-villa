@@ -10,8 +10,4 @@ white = #ffffff (mostly text)
 
 # TODO
 
-## Frontend
-- buyout feature
-- leave feature
-- winner select
-- basement
+--rent

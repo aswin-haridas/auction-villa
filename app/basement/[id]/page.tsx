@@ -1,10 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { getPainting } from "@/app/services/painting";
+
+// Import our extracted components
+import { ImageModal } from "./ImageModal";
+import { PaintingHeader } from "./PaintingHeader";
+import { PaintingGallery } from "./PaintingGallery";
+import { anton } from "@/app/font/fonts";
 
 interface Painting {
   painting_id: string;
@@ -21,7 +25,20 @@ export default function PaintingPage() {
 
   const [painting, setPainting] = useState<Painting | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [currentImage, setCurrentImage] = useState<number>(0);
+  const [selectedGridImage, setSelectedGridImage] = useState<string | null>(
+    null
+  );
+
+  // Fake stats for social media-like UI
+  const likeCount = Math.floor(Math.random() * 5000) + 1000;
+
+  const openGridImage = (img: string) => {
+    setSelectedGridImage(img);
+  };
+
+  const closeGridImage = () => {
+    setSelectedGridImage(null);
+  };
 
   useEffect(() => {
     const fetchPainting = async () => {
@@ -42,18 +59,18 @@ export default function PaintingPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 flex items-center justify-center h-screen">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="p-4 flex items-center justify-center h-screen bg-[#171717]">
+        <div className="text-[#ffffff] text-xl">Loading...</div>
       </div>
     );
   }
 
   if (!painting) {
     return (
-      <div className="p-4 flex items-center justify-center h-screen">
-        <div className="text-white text-xl">
+      <div className="p-4 flex items-center justify-center h-screen bg-[#171717]">
+        <div className="text-[#ffffff] text-xl">
           Painting not found!{" "}
-          <Link className="text-red-700 hover:underline" href="/">
+          <Link className="text-[#ba3737] hover:underline" href="/">
             Go to homepage
           </Link>
         </div>
@@ -62,80 +79,42 @@ export default function PaintingPage() {
   }
 
   return (
-    <section className="flex flex-row h-[80vh] m-12">
-      <div className="w-1/2  flex flex-col">
-        <h1 className="text-6xl text-[#FEF9E1] font-bold mb-6">
-          {painting.name}
-        </h1>
-        <div className="grid grid-cols-1 gap-4 mb-4">
-          <p className="text-[#878787] text-lg">
-            Category: <span className="text-white">{painting.category}</span>
-          </p>
-          <p className="text-[#878787] text-lg">
-            Acquired on:{" "}
-            <span className="text-white font-semibold">
-              {new Date(painting.acquire_date).toLocaleDateString()}
-            </span>
-          </p>
+    <div className="px-12">
+      <p className={`${anton.className} text-[#878787] text-3xl pt-8 pb-8`}>
+        Profile
+      </p>
+      {/* Profile header */}
+      <PaintingHeader
+        name={painting.name}
+        image={painting.image[0] || "/placeholder.jpg"}
+        category={painting.category}
+        acquireDate={painting.acquire_date}
+        likeCount={likeCount}
+      />
+
+      {/* Gallery grid */}
+      <PaintingGallery
+        images={painting.image}
+        paintingName={painting.name}
+        onImageClick={openGridImage}
+      />
+
+      {/* Fullscreen modal for grid images */}
+      <ImageModal
+        isOpen={!!selectedGridImage}
+        onClose={closeGridImage}
+        src={selectedGridImage || ""}
+        alt={`${painting.name} - Full view`}
+      />
+
+      <section id="dashboard">
+        <p className={`${anton.className} text-[#878787] text-3xl pt-8 pb-8`}>
+          Dashboard
+        </p>
+        <div className="mb-8">
+          <p className="text-[#ffffff]">Dashboard content goes here...</p>
         </div>
-        <div className="mt-2">
-          <h2 className="text-[#ba3737] text-xl font-semibold mb-2">
-            Painting Details
-          </h2>
-          <p className="text-white text-lg">
-            This is one of your valuable paintings in your collection. You
-            acquired this masterpiece on{" "}
-            {new Date(painting.acquire_date).toLocaleDateString()}.
-          </p>
-        </div>
-        <div className="mt-6">
-          <Link
-            href="/basement"
-            className="text-[#ba3737] hover:underline flex items-center"
-          >
-            ← Back to Collection
-          </Link>
-        </div>
-      </div>
-      <div className="w-1/2 flex justify-end">
-        {painting.image && painting.image.length > 0 ? (
-          <div className="w-4/6 relative h-[500px]">
-            {" "}
-            {/* Added fixed height */}
-            <div className="absolute top-2 right-2 flex space-x-2 z-10">
-              <button
-                onClick={() =>
-                  setCurrentImage((prev) =>
-                    prev > 0 ? prev - 1 : painting.image.length - 1
-                  )
-                }
-                className="bg-black/50 p-1 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <ChevronLeftIcon className="text-white h-5 w-5" />
-              </button>
-              <button
-                onClick={() =>
-                  setCurrentImage((prev) =>
-                    prev < painting.image.length - 1 ? prev + 1 : 0
-                  )
-                }
-                className="bg-black/50 p-1 rounded-full hover:bg-black/70 transition-colors"
-              >
-                <ChevronRightIcon className="text-white h-5 w-5" />
-              </button>
-            </div>
-            <Image
-              src={painting.image[currentImage] || "/placeholder.jpg"}
-              alt={`Current Image of ${painting.name}`}
-              fill
-              priority
-              className="object-cover rounded-xl"
-            />
-          </div>
-        ) : (
-          <div className="text-white">No images available</div>
-        )}
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

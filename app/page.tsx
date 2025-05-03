@@ -2,62 +2,32 @@
 import Link from "next/link";
 import Card from "./components/AtomCard";
 import { anton } from "./font/fonts";
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { supabase } from "@/app/services/client";
+import { useMemo } from "react";
 import React from "react";
-
-interface Paintings {
-  painting_id: number;
-  image: string[];
-  name: string;
-  price: number;
-  category: string;
-}
+import { useVerifyUser } from "./hooks/useVerifyUser";
+import { usePaintings } from "./hooks/usePaintings";
 
 function Auction() {
-  const [paintings, setPaintings] = useState<Paintings[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, isLoading: userLoading } = useVerifyUser();
+  const { paintings, loading: paintingsLoading } = usePaintings(userId);
 
-  // Move sessionStorage access into useEffect
-  useEffect(() => {
-    const storedUserId = sessionStorage.getItem("user_id");
-    setUserId(storedUserId);
+  const isLoading = userLoading || paintingsLoading;
 
-    if (!storedUserId) {
-      window.location.href = "/auth";
-    }
-  }, []);
+  // Distribute paintings into 5 columns for a masonry-like layout
+  const columns = useMemo(() => {
+    const cols: Array<typeof paintings> = [[], [], [], [], []];
 
-  const fetchPaintings = useCallback(async () => {
-    if (!userId) return; // Avoid fetching until userId is available
+    paintings.forEach((painting, index) => {
+      const colIndex = index % 5;
+      cols[colIndex].push(painting);
+    });
 
-    const { data, error } = await supabase
-      .from("Painting")
-      .select("*")
-      .eq("owner", userId);
-
-    if (error) {
-      console.error("Error fetching paintings:", error);
-    } else {
-      setPaintings(data as Paintings[]);
-    }
-  }, [userId]); // Add userId as a dependency
-
-  useEffect(() => {
-    fetchPaintings();
-  }, [fetchPaintings]);
-
-  const paintingList = useMemo(() => {
-    return paintings.map((painting) => (
-      <Link key={painting.painting_id} href={`/basement/${painting.painting_id}`}>
-        <Card
-          image={painting.image && painting.image[0] ? painting.image[0] : ""}
-          name={painting.name}
-          category={painting.category}
-        />
-      </Link>
-    ));
+    return cols;
   }, [paintings]);
+
+  if (isLoading) {
+    return <div className="px-12 py-8">Loading...</div>;
+  }
 
   return (
     <>
@@ -65,7 +35,29 @@ function Auction() {
         <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
           Your Holdings
         </p>
-        <div className="grid grid-cols-5 pt-8">{paintingList}</div>
+
+        <div className="flex gap-4 pt-8">
+          {columns.map((column, columnIndex) => (
+            <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+              {column.map((painting) => (
+                <Link
+                  key={painting.painting_id}
+                  href={`/basement/${painting.painting_id}`}
+                >
+                  <Card
+                    image={
+                      painting.image && painting.image[0]
+                        ? painting.image[0]
+                        : ""
+                    }
+                    name={painting.name}
+                    category={painting.category}
+                  />
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );
