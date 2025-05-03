@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { Auction, Bid } from "@/app/types/auction";
+import { Auction, Bid } from "@/app/auction/auction";
 import {
   getAuction,
   subscribeToAuction,
@@ -159,7 +159,7 @@ export default function AuctionPage() {
       alert(
         `Failed to place bid: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`,
+        }`
       );
     } finally {
       setLoading(false);
@@ -219,7 +219,7 @@ export default function AuctionPage() {
         alert(
           `Buyout failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
       } finally {
         setLoading(false);

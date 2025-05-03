@@ -6,7 +6,7 @@ import { anton } from "../font/fonts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAuctions } from "../services/auction";
-import { Auction } from "../types/auction";
+import { Auction } from "./auction";
 
 function AuctionPage() {
   const router = useRouter();
@@ -31,13 +31,13 @@ function AuctionPage() {
         const live = allAuctions.filter(
           (auction) =>
             auction.status === "active" &&
-            new Date(auction.end_time) > new Date(),
+            new Date(auction.end_time) > new Date()
         );
 
         const previous = allAuctions.filter(
           (auction) =>
             auction.status === "closed" ||
-            new Date(auction.end_time) <= new Date(),
+            new Date(auction.end_time) <= new Date()
         );
 
         setLiveAuctions(live);
