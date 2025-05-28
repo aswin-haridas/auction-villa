@@ -19,10 +19,19 @@ interface Painting {
   image: string[];
   acquire_date: string;
   category: string;
-  owner: string;
+  owner: string; // Ensure this is not optional
   status?: string;
   at_work?: boolean;
-  price?: number;
+  working_time?: number;
+  price?: number; // From existing setPaintingForSale
+
+  // New fields for trade and rent
+  is_for_trade?: boolean;
+  is_for_rent?: boolean;
+  is_rented?: boolean;
+  rented_by?: string | null;
+  rental_end_date?: string | null;
+  rental_price?: number | null;
 }
 
 export default function PaintingPage() {
