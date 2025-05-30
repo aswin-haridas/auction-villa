@@ -1,5 +1,6 @@
 import { anton } from "@/app/font/fonts";
 import { useState, useEffect } from "react";
+import { useDashboardStore } from "@/app/store/dashboardStore"; // Import dashboard store
 import {
   getPainting, // Changed from getPaintingStatus
   sendPaintingToWork,
@@ -53,6 +54,7 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
   const [paintingData, setPaintingData] = useState<Painting | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<boolean>(false); // For specific actions
+  const { isWorking, toggleIsWorking, incomeEarned, roomsVisited } = useDashboardStore();
   const [message, setMessage] = useState<string>("");
   const [rentalPriceInput, setRentalPriceInput] = useState<number>(0);
   const [sellPriceInput, setSellPriceInput] = useState<number>(0);
@@ -67,6 +69,10 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
         setPaintingData(data);
         setSellPriceInput(data.price || 0);
         setRentalPriceInput(data.rental_price || 0);
+        // Synchronize dashboard store's isWorking with fetched paintingData.at_work
+        if (data.at_work !== isWorking) {
+          toggleIsWorking();
+        }
       } catch (error) {
         console.error("Failed to fetch painting data:", error);
         setMessage("Failed to load painting details.");
@@ -110,13 +116,23 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
 
   const handleWorkToggle = async (checked: boolean) => {
     if (!paintingData) return;
-    // sendPaintingToWork doesn't return the painting object in the current setup
-    // We'll update the state optimistically or based on a re-fetch if necessary
+    if (!paintingData) return;
+
+    // The API call is for the desired state `checked`
+    // The store will be updated after successful API call
     await handleApiAction(
       async () => {
-         await sendPaintingToWork(paintingId, currentUserId, checked ? 60 : 0); // Assuming 60 min default work time
-         // Manually update paintingData as sendPaintingToWork is void
-        setPaintingData(prev => prev ? ({...prev, at_work: checked, status: checked ? "in_work" : "available"}) : null);
+        await sendPaintingToWork(paintingId, currentUserId, checked ? 60 : 0); // Assuming 60 min default work time
+        // Update store after successful API call
+        // Note: `checked` is the desired state passed to the function
+        // If current `isWorking` is different from `checked`, then toggle.
+        // This handles the case where the API call reflects the change.
+        if (isWorking !== checked) {
+            toggleIsWorking();
+        }
+        // Still update local paintingData for other fields like 'status' if not covered by store/API response
+        // If sendPaintingToWork returned the full object, this manual update for status might be redundant
+        setPaintingData(prev => prev ? ({...prev, status: checked ? "in_work" : "available", at_work: checked }) : null);
       },
       `Painting is now ${checked ? "at work" : "not working"}`
     );
@@ -252,7 +268,7 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
 
       <div>
         {/* Stats Section - Assuming these fields exist on Painting object or are calculated elsewhere */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           <div className="bg-[#171717] p-4 rounded-lg text-white">
             <p className="text-sm text-[#878787] mb-1">Money Made</p>
             <p className="text-lg font-bold">
@@ -266,6 +282,15 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
           <div className="bg-[#171717] p-4 rounded-lg text-white">
             <p className="text-sm text-[#878787] mb-1">Acquire Date</p>
             <p className="text-lg font-bold">{new Date(paintingData.acquire_date).toLocaleDateString()}</p>
+          </div>
+          {/* New Stats from Dashboard Store */}
+          <div className="bg-[#171717] p-4 rounded-lg text-white">
+            <p className="text-sm text-[#878787] mb-1">Income Earned (Store)</p>
+            <p className="text-lg font-bold">${incomeEarned.toFixed(2)}</p>
+          </div>
+          <div className="bg-[#171717] p-4 rounded-lg text-white">
+            <p className="text-sm text-[#878787] mb-1">Rooms Visited (Store)</p>
+            <p className="text-lg font-bold">{roomsVisited}</p>
           </div>
         </div>
       </div>
@@ -281,8 +306,8 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
           </p>
           <div className="flex items-center justify-between">
             <ToggleSwitch
-              checked={!!paintingData.at_work}
-              onChange={handleWorkToggle}
+              checked={isWorking} // Use isWorking from the store
+              onChange={handleWorkToggle} // handleWorkToggle will now update the store
               disabled={actionLoading || !isOwner || paintingData.is_rented}
             />
             {actionLoading && <span className="text-[#878787]">Processing...</span>}
