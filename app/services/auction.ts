@@ -1,9 +1,9 @@
 import { supabase } from "./client";
-import { Auction } from "@/app/types/auction";
+import { Auction } from "@/app/auction/auction";
 
 // Get auctions with optional status filter
 export async function getAuctions(
-  status?: "active" | "closed",
+  status?: "active" | "closed"
 ): Promise<Auction[]> {
   let query = supabase.from("Auction").select("*");
 
@@ -31,7 +31,7 @@ export async function getAuction(auctionId: string): Promise<Auction> {
 
 export function subscribeToAuction(
   auctionId: string,
-  callback: (auction: Auction) => void,
+  callback: (auction: Auction) => void
 ) {
   // First, get initial auction data
   getAuction(auctionId).then(callback).catch(console.error);
@@ -57,7 +57,7 @@ export function subscribeToAuction(
         // For INSERT and UPDATE events, the new record is in payload.new
         const updatedAuction = payload.new as Auction;
         callback(updatedAuction);
-      },
+      }
     )
     .subscribe();
 
@@ -82,7 +82,7 @@ export async function checkAuctionActive(auctionId: string): Promise<boolean> {
 export async function winAuction(
   auctionId: string,
   winnerId: string,
-  amount: number,
+  amount: number
 ): Promise<void> {
   const { data: auction, error: auctionError } = await supabase
     .from("Auction")
@@ -141,7 +141,7 @@ export async function winAuction(
 export async function endAuction(
   auctionId: string,
   winnerId?: string,
-  winnerName?: string,
+  winnerName?: string
 ): Promise<void> {
   const updateData: {
     status: string;

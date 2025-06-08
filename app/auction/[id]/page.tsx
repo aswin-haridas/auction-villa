@@ -5,19 +5,19 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { Auction, Bid } from "@/app/types/auction";
+import { Auction, Bid } from "@/app/auction/auction";
 import {
   getAuction,
   subscribeToAuction,
   checkAuctionActive,
   endAuction,
-} from "@/app/auction/services/auction";
+} from "@/app/services/auction";
 import {
   getBids,
   subscribeToBids,
   placeBid as placeBidService,
 } from "@/app/services/bids";
-import { getWalletBalance } from "@/app/bank/services/bank";
+import { getWalletBalance } from "@/app/services/bank";
 
 export default function AuctionPage() {
   const params = useParams();
@@ -44,7 +44,7 @@ export default function AuctionPage() {
   const biddingIncrements = [100, 500, 1000, 5000, 10000];
 
   // Colors for different users in the bid history
-  const userColors = ["#FF5733", "#33FF57"];
+  const userColors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3"];
 
   // Calculate highest bid and bidder
   const sortedBids = [...bids].sort((a, b) => b.amount - a.amount);
@@ -159,7 +159,7 @@ export default function AuctionPage() {
       alert(
         `Failed to place bid: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`,
+        }`
       );
     } finally {
       setLoading(false);
@@ -219,7 +219,7 @@ export default function AuctionPage() {
         alert(
           `Buyout failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
       } finally {
         setLoading(false);

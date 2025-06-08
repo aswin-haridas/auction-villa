@@ -1,11 +1,11 @@
 import { supabase } from "./client";
-import { Bid } from "../types/auction";
+import { Bid } from "../auction/auction";
 import { winAuction } from "./auction";
 
 export async function placeBid(
   userId: string,
   auctionId: string,
-  amount: number,
+  amount: number
 ): Promise<void> {
   const { data: user, error: userError } = await supabase
     .from("User")
@@ -65,7 +65,7 @@ export async function placeBid(
 export async function getBids(auctionId: string): Promise<Bid[]> {
   const { data, error } = await supabase
     .from("Bid")
-    .select("bid_id, auction_id, user_id, amount, timestamp, username")
+    .select("*")
     .eq("auction_id", auctionId)
     .order("timestamp", { ascending: false });
 
@@ -75,7 +75,7 @@ export async function getBids(auctionId: string): Promise<Bid[]> {
 
 export function subscribeToBids(
   auctionId: string,
-  callback: (bids: Bid[]) => void,
+  callback: (bids: Bid[]) => void
 ) {
   // First, get initial bids
   getBids(auctionId).then(callback).catch(console.error);
@@ -99,7 +99,7 @@ export function subscribeToBids(
         } catch (error) {
           console.error("Error fetching updated bids:", error);
         }
-      },
+      }
     )
     .subscribe();
 

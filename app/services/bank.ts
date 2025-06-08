@@ -1,5 +1,5 @@
 "use client";
-import { supabase } from "@/app/services/client";
+import { supabase } from "./client";
 
 export const getWalletBalance = async (): Promise<number> => {
   const user_id = sessionStorage.getItem("user_id");

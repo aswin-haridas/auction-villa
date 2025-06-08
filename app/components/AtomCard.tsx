@@ -8,13 +8,13 @@ interface CardProps {
 }
 
 const AtomCard = ({ image, name, category }: CardProps) => (
-  <div className="w-full rounded-lg overflow-hidden transition-shadow duration-300 bg-[#242424] cursor-pointer hover:underline">
+  <div className="break-inside-avoid w-full rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-[#242424] cursor-pointer">
     <div className="w-full">
       {image && (
         <img
           src={image}
           alt={name}
-          className="w-full block object-cover rounded-t-lg max-h-96"
+          className="w-full block object-cover rounded-t-lg"
         />
       )}
     </div>
