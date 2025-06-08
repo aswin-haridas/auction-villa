@@ -7,6 +7,8 @@ interface PaintingGalleryProps {
   onImageClick: (img: string) => void;
 }
 
+
+
 export function PaintingGallery({
   images,
   paintingName,

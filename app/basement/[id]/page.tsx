@@ -38,7 +38,7 @@ export default function PaintingPage() {
     null
   );
 
-  const likeCount = Math.floor(Math.random() * 5000) + 1000;
+  const likeCount = 2;
 
   const openGridImage = (img: string) => {
     setSelectedGridImage(img);
@@ -88,7 +88,7 @@ export default function PaintingPage() {
 
   return (
     <div className="px-12">
-      <p className={`${anton.className} text-[#878787] text-3xl pt-8 pb-8`}>
+      <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
         Profile
       </p>
       {/* Profile header */}
@@ -98,6 +98,7 @@ export default function PaintingPage() {
         category={painting.category}
         acquireDate={painting.acquire_date}
         likeCount={likeCount}
+        id={painting.painting_id}
       />
 
       {/* Gallery grid */}
@@ -114,15 +115,6 @@ export default function PaintingPage() {
         src={selectedGridImage || ""}
         alt={`${painting.name} - Full view`}
       />
-
-      <section id="dashboard">
-        <p className={`${anton.className} text-[#878787] text-3xl pt-8 pb-8`}>
-          Dashboard
-        </p>
-        <div className="mb-8">
-          <p className="text-[#ffffff]">Dashboard content goes here...</p>
-        </div>
-      </section>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getPaintings } from "../services/painting";
+import { getPaintingsOfUser } from "../services/painting";
 
 interface Painting {
   painting_id: number;
@@ -20,7 +20,7 @@ export function usePaintings(userId: string | null) {
 
     setLoading(true);
     try {
-      const data = await getPaintings(userId);
+      const data = await getPaintingsOfUser(userId);
       setPaintings(data as unknown as Painting[]);
       setError(null);
     } catch (err) {
