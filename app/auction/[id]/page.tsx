@@ -1,21 +1,20 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AuctionImages from "@/app/components/auctionImages";
-import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { Auction, Bid } from "@/app/auction/auction";
+import { Auction, Bid } from "@/app/lib/types/auction";
 import {
-  getAuction,
-  subscribeToAuction,
   checkAuctionActive,
   endAuction,
+  getAuction,
+  subscribeToAuction,
 } from "@/app/services/auction";
 import {
   getBids,
-  subscribeToBids,
   placeBid as placeBidService,
+  subscribeToBids,
 } from "@/app/services/bids";
 import { getWalletBalance } from "@/app/services/bank";
 

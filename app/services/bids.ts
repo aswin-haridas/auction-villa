@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { Bid } from "../auction/auction";
+import { Bid } from "../lib/types/auction";
 import { winAuction } from "./auction";
 
 export async function placeBid(

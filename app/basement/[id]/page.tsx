@@ -1,32 +1,13 @@
 "use client";
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getPainting } from "@/app/services/painting";
+import { getPainting, Painting } from "@/app/lib/types/painting";
 import { ImageModal } from "./ImageModal";
 import { PaintingHeader } from "./PaintingHeader";
 import { PaintingGallery } from "./PaintingGallery";
 import { anton } from "@/app/font/fonts";
-
-interface Painting {
-  painting_id: string;
-  name: string;
-  image: string[];
-  acquire_date: string;
-  category: string;
-  owner: string;
-  status?: string;
-  at_work?: boolean;
-  price?: number;
-  working_time?: number;
-  is_for_trade?: boolean;
-  is_for_rent?: boolean;
-  is_rented?: boolean;
-  rented_by?: string | null;
-  rental_end_date?: string | null;
-  rental_price?: number | null;
-}
+import Loading from "@/app/components/Loading";
 
 export default function PaintingPage() {
   const params = useParams();
@@ -66,11 +47,7 @@ export default function PaintingPage() {
   }, [paintingId]);
 
   if (isLoading) {
-    return (
-      <div className="p-4 flex items-center justify-center h-screen bg-[#171717]">
-        <div className="text-[#ffffff] text-xl">Loading...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!painting) {
@@ -94,7 +71,7 @@ export default function PaintingPage() {
       {/* Profile header */}
       <PaintingHeader
         name={painting.name}
-        image={painting.image[0] || "/placeholder.jpg"}
+        image={painting.images[0] || "/placeholder.jpg"}
         category={painting.category}
         acquireDate={painting.acquire_date}
         likeCount={likeCount}
@@ -103,7 +80,7 @@ export default function PaintingPage() {
 
       {/* Gallery grid */}
       <PaintingGallery
-        images={painting.image}
+        images={painting.images}
         paintingName={painting.name}
         onImageClick={openGridImage}
       />

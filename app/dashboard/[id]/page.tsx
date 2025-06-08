@@ -20,7 +20,7 @@ export default function Dashboard() {
     return data;
   };
 
-  console.log(getPainting(id as string));
+  const paintings = getPainting(id as string);
 
-  return <div>{}</div>;
+  return <div>{paintings}</div>;
 }
