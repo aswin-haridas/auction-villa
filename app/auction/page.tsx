@@ -5,8 +5,13 @@ import Card from "../components/AtomCard";
 import { anton } from "../font/fonts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+<<<<<<< HEAD
 import { getAuctions } from "./services/auction";
 import { Auction } from "./types";
+=======
+import { getAuctions } from "../services/auction";
+import { Auction } from "../types/auction";
+>>>>>>> parent of 2731e28 (removed types folder)
 
 function AuctionPage() {
   const router = useRouter();
@@ -31,13 +36,13 @@ function AuctionPage() {
         const live = allAuctions.filter(
           (auction) =>
             auction.status === "active" &&
-            new Date(auction.end_time) > new Date()
+            new Date(auction.end_time) > new Date(),
         );
 
         const previous = allAuctions.filter(
           (auction) =>
             auction.status === "closed" ||
-            new Date(auction.end_time) <= new Date()
+            new Date(auction.end_time) <= new Date(),
         );
 
         setLiveAuctions(live);

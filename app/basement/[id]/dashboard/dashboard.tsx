@@ -1,5 +1,6 @@
+import React from "react";
 import { anton } from "@/app/font/fonts";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   getPaintingStatus,
   sendPaintingToWork,
@@ -43,85 +44,26 @@ export const Dashboard = ({ paintingId }: { paintingId: string }) => {
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const data = getPaintingStatus(paintingId);
-
-  const handleApiAction = async (
-    action: () => Promise<any>,
-    successMsg: string
-  ) => {
-    setLoading(true);
-    setMessage("");
-    try {
-      await action();
-      setMessage(successMsg);
-    } catch (error) {
-      console.error(`Error: ${error}`);
-      setMessage(`Failed to ${successMsg.toLowerCase()}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleWorkToggle = async (checked: boolean) => {
-    await handleApiAction(
-      async () => {
-        await sendPaintingToWork(paintingId, checked);
-        setPaintingData({
-          ...paintingData,
-          atWork: checked,
-          status: checked ? "at_work" : "available",
-        });
-      },
-      `Painting is now ${checked ? "at work" : "not working"}`
-    );
+    // TODO: Implement work toggle functionality
   };
 
   const handleSell = async () => {
-    if (!paintingData.price || paintingData.price <= 0) {
-      setMessage("Please enter a valid price");
-      return;
-    }
-
-    await handleApiAction(async () => {
-      await setPaintingForSale(paintingId, paintingData.price);
-      setPaintingData({
-        ...paintingData,
-        status: "for_sale",
-      });
-    }, `Painting is now for sale at $${paintingData.price}`);
+    // TODO: Implement sell functionality
   };
 
   const handleTrade = async () => {
-    await handleApiAction(async () => {
-      await tradePainting(paintingId);
-      setPaintingData({
-        ...paintingData,
-        status: "for_trade",
-      });
-    }, "Painting is now available for trade");
+    // TODO: Implement trade functionality
+  };
+
+  const handleApiAction = async (action: () => Promise<void>, successMessage: string) => {
+    // TODO: Implement API action handler
   };
 
   const renderStatusBadge = () => {
-    const statusConfig = {
-      at_work: { bg: "bg-blue-500", text: "At Work" },
-      for_sale: {
-        bg: "bg-green-500",
-        text: `For Sale - $${paintingData.price}`,
-      },
-      for_trade: { bg: "bg-purple-500", text: "For Trade" },
-      available: { bg: "bg-gray-500", text: "Available" },
-    };
-
-    const config =
-      statusConfig[paintingData.status as keyof typeof statusConfig] ||
-      statusConfig.available;
-    const badgeClasses = "px-3 py-1 rounded-full text-sm font-medium";
-
-    return (
-      <span className={`${badgeClasses} ${config.bg} text-white`}>
-        {config.text}
-      </span>
-    );
+    // TODO: Implement status badge rendering
+    return null;
   };
 
   return (
