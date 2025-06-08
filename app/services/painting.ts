@@ -1,12 +1,13 @@
 import { supabase } from "./client";
 
-interface Painting {
+export interface Painting {
   painting_id: string;
   name: string;
   image: string[];
   acquire_date: string;
   category: string;
   owner: string;
+  status?: string;
 }
 
 export async function getPaintings(userId: string): Promise<Painting[]> {

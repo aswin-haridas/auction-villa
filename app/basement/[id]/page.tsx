@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getPainting } from "@/app/services/painting";
-
-// Import our extracted components
 import { ImageModal } from "./ImageModal";
 import { PaintingHeader } from "./PaintingHeader";
 import { PaintingGallery } from "./PaintingGallery";
@@ -17,13 +15,11 @@ interface Painting {
   image: string[];
   acquire_date: string;
   category: string;
-  owner: string; // Ensure this is not optional
+  owner: string;
   status?: string;
   at_work?: boolean;
+  price?: number;
   working_time?: number;
-  price?: number; // From existing setPaintingForSale
-
-  // New fields for trade and rent
   is_for_trade?: boolean;
   is_for_rent?: boolean;
   is_rented?: boolean;
@@ -39,10 +35,9 @@ export default function PaintingPage() {
   const [painting, setPainting] = useState<Painting | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedGridImage, setSelectedGridImage] = useState<string | null>(
-    null,
+    null
   );
 
-  // Fake stats for social media-like UI
   const likeCount = Math.floor(Math.random() * 5000) + 1000;
 
   const openGridImage = (img: string) => {
