@@ -3,7 +3,7 @@ import Link from "next/link";
 import { anton } from "./lib/font/fonts";
 import React, { useMemo, useState, useEffect } from "react";
 import checkUser from "./lib/utils/checkUser";
-import { usePaintings } from "./lib/hooks/usePainting";
+import usePaintings from "./lib/hooks/usePainting";
 import Loading from "./components/Loading";
 import Card from "./components/Card";
 

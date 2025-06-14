@@ -2,13 +2,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/app/services/client";
 
 import { Painting } from "../types/painting";
+import { User } from "../types/user";
 
 export function usePainting(paintingId: string | null) {
   const [painting, setPainting] = useState<Painting | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
+  useEffect(() => {
+    // Use localStorage only in client-side
+    const userData =
+      typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    setUser(userData ? JSON.parse(userData) : null);
+  }, []);
 
   useEffect(() => {
     const fetchPainting = async () => {
@@ -45,12 +51,19 @@ export function usePainting(paintingId: string | null) {
 
 function usePaintings() {
   const [paintings, setPaintings] = useState<Painting[]>([]);
+  const [user, setUser] = useState<User | null>(null);
 
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
+  useEffect(() => {
+    // Use localStorage only in client-side
+    const userData =
+      typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    setUser(userData ? JSON.parse(userData) : null);
+  }, []);
 
   useEffect(() => {
     const fetchPaintings = async () => {
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("Painting")
         .select(

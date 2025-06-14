@@ -80,7 +80,7 @@ export default function CreateAuctionPage() {
     setIsSuccess(false);
     setIsError(false);
     setError(null);
-
+    
     try {
       const validationError = validateForm();
       if (validationError) throw new Error(validationError);
@@ -114,7 +114,7 @@ export default function CreateAuctionPage() {
         },
       ]);
       if (insertError) throw new Error(`Failed to save auction`);
-
+      
       setIsSuccess(true);
       setTimeout(() => router.push("/auction"), 1000);
     } catch (err) {
@@ -142,7 +142,10 @@ export default function CreateAuctionPage() {
         Create auction
       </p>
       <div className="flex h-[75vh] mt-8">
-        <form className="space-y-4 text-white w-4/12" onSubmit={handleSubmit}>
+        <form
+          className="space-y-4 text-white w-4/12"
+          onSubmit={handleSubmit}
+        >
           <InputField
             type="text"
             name="name"

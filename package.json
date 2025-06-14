@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
-    "@tanstack/react-query": "^5.80.6",
     "autoprefixer": "10.4.20",
     "lucide-react": "^0.475.0",
     "next": "latest",
