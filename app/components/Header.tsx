@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useStore } from "../store/store";
+import { useMemory } from "../store/store";
 
 const symbols = ["𖤐", "𖤍", "⁶⁶⁶", "🕇"];
 const links = ["Basement", "Auction", "Create", "Bank"];
@@ -12,10 +12,7 @@ export default function Header() {
   const [symbol, setSymbol] = useState<string>("");
   const router = useRouter();
   const pathname = usePathname();
-  const name = useStore((state) => state.name);
-  if (pathname === "/auth") {
-    return null;
-  }
+  const user = useMemory((state) => state.user);
   useEffect(() => {
     const changeSymbol = () => {
       setSymbol(symbols[Math.floor(Math.random() * symbols.length)]);
@@ -25,7 +22,9 @@ export default function Header() {
     const interval = setInterval(changeSymbol, SYMBOL_INTERVAL);
     return () => clearInterval(interval);
   }, []);
-
+  if (pathname === "/auth") {
+    return null;
+  }
   const handleSignOut = () => {
     router.push("/auth");
   };
@@ -51,7 +50,7 @@ export default function Header() {
           onClick={handleSignOut}
           className="text-[#ba3737] text-base cursor-pointer hover:underline"
         >
-          {name || "###"}
+          {user?.name || "###"}
         </button>
       </div>
     </div>

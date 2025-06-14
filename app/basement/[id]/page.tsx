@@ -1,20 +1,19 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getPainting, Painting } from "@/app/lib/types/painting";
 import { ImageModal } from "./ImageModal";
 import { PaintingHeader } from "./PaintingHeader";
 import { PaintingGallery } from "./PaintingGallery";
-import { anton } from "@/app/font/fonts";
+import { anton } from "@/app/lib/font/fonts";
 import Loading from "@/app/components/Loading";
+import { usePainting } from "@/app/lib/hooks/usePainting";
 
 export default function PaintingPage() {
   const params = useParams();
   const paintingId = params.id as string;
+  const { painting, isLoading } = usePainting(paintingId);
 
-  const [painting, setPainting] = useState<Painting | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedGridImage, setSelectedGridImage] = useState<string | null>(
     null
   );
@@ -28,23 +27,6 @@ export default function PaintingPage() {
   const closeGridImage = () => {
     setSelectedGridImage(null);
   };
-
-  useEffect(() => {
-    const fetchPainting = async () => {
-      try {
-        const paintingData = await getPainting(paintingId);
-        setPainting(paintingData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching painting:", error);
-        setIsLoading(false);
-      }
-    };
-
-    if (paintingId) {
-      fetchPainting();
-    }
-  }, [paintingId]);
 
   if (isLoading) {
     return <Loading />;

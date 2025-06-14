@@ -1,11 +1,11 @@
 import { create } from "zustand";
 
 type StoreState = {
-  name: string;
-  setName: (newName: string) => void;
+  balance: number;
+  setBalance: (balance: number) => void;
 };
 
-export const useStore = create<StoreState>((set) => ({
-  name: "###",
-  setName: (newName) => set({ name: newName }),
+export const useMemory = create<StoreState>((set) => ({
+  balance: 0,
+  setBalance: (balance) => set({ balance }),
 }));

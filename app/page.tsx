@@ -1,65 +1,74 @@
 "use client";
 import Link from "next/link";
-import Card from "./components/AtomCard";
-import {anton} from "./font/fonts";
-import React, {useMemo} from "react";
-import {useVerifyUser} from "./lib/hooks/useVerifyUser";
-import {usePaintings} from "./hooks/usePaintings";
+import { anton } from "./lib/font/fonts";
+import React, { useMemo, useState, useEffect } from "react";
+import checkUser from "./lib/utils/checkUser";
+import { usePaintings } from "./lib/hooks/usePainting";
+import Loading from "./components/Loading";
+import Card from "./components/Card";
 
 function Auction() {
-    const {userId, isLoading: userLoading} = useVerifyUser();
-    const {paintings, loading: paintingsLoading} = usePaintings(userId);
+  checkUser();
+  const [loading, setLoading] = useState(true);
+  const paintings = usePaintings();
 
-    const isLoading = userLoading || paintingsLoading;
-
-    // Distribute paintings into 5 columns for a masonry-like layout
-    const columns = useMemo(() => {
-        const cols: Array<typeof paintings> = [[], [], [], [], []];
-
-        paintings.forEach((painting, index) => {
-            const colIndex = index % 5;
-            cols[colIndex].push(painting);
-        });
-
-        return cols;
-    }, [paintings]);
-
-    if (isLoading) {
-        return <div className="px-12 py-8">Loading...</div>;
+  useEffect(() => {
+    if (paintings) {
+      setLoading(false);
     }
+  }, [paintings]);
 
-    return (
-        <>
-            <div className="px-12">
-                <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
-                    Your Holdings
-                </p>
-
-                <div className="flex gap-4 pt-8">
-                    {columns.map((column, columnIndex) => (
-                        <div key={columnIndex} className="flex-1 flex flex-col gap-6">
-                            {column.map((painting) => (
-                                <Link
-                                    key={painting.painting_id}
-                                    href={`/basement/${painting.painting_id}`}
-                                >
-                                    <Card
-                                        image={
-                                            painting.image && painting.image[0]
-                                                ? painting.image[0]
-                                                : ""
-                                        }
-                                        name={painting.name}
-                                        category={painting.category}
-                                    />
-                                </Link>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </>
+  const columns = useMemo(() => {
+    const columnCount = 3;
+    const result: (typeof paintings)[] = Array.from(
+      { length: columnCount },
+      () => []
     );
+    if (paintings && paintings.length > 0) {
+      paintings.forEach((painting, index) => {
+        result[index % columnCount].push(painting);
+      });
+    }
+    return result;
+  }, [paintings]);
+
+  return (
+    <>
+      <div className="px-12">
+        <p className={`${anton.className} text-[#878787] text-3xl pt-8`}>
+          Your Holdings
+        </p>
+        {loading ? (
+          <Loading />
+        ) : paintings && paintings.length > 0 ? (
+          <div className="flex gap-4 pt-8">
+            {columns.map((column, columnIndex) => (
+              <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+                {column.map((painting) => (
+                  <Link
+                    key={painting.painting_id}
+                    href={`/basement/${painting.painting_id}`}
+                  >
+                    <Card
+                      image={
+                        painting.images && painting.images[0]
+                          ? painting.images[0]
+                          : ""
+                      }
+                      name={painting.name}
+                      category={painting.category}
+                    />
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 pt-8">No paintings found</p>
+        )}
+      </div>
+    </>
+  );
 }
 
 export default Auction;

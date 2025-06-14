@@ -5,23 +5,25 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { Auction, Bid } from "@/app/lib/types/auction";
-import {
-  checkAuctionActive,
-  endAuction,
-  getAuction,
-  subscribeToAuction,
-} from "@/app/services/auction";
-import {
-  getBids,
-  placeBid as placeBidService,
-  subscribeToBids,
-} from "@/app/services/bids";
-import { getWalletBalance } from "@/app/services/bank";
+import useBank from "@/app/lib/hooks/useBank";
+import useBids from "@/app/lib/hooks/useBids";
+import { useAuction } from "@/app/lib/hooks/useAuction";
 
 export default function AuctionPage() {
   const params = useParams();
   const router = useRouter();
   const auctionId = params.id as string;
+
+  // Use the useBids hook inside the component
+  const { getBids, placeBid, subscribeToBids } = useBids();
+
+  const { checkAuctionActive, endAuction, getAuction, subscribeToAuction } =
+    useAuction();
+
+  const getWalletBalance = async () => {
+    const balance = useBank();
+    return balance;
+  };
 
   // Local state for auction data
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -80,7 +82,7 @@ export default function AuctionPage() {
     const fetchWalletBalance = async () => {
       try {
         const balance = await getWalletBalance();
-        setWalletBalance(balance);
+        setWalletBalance(balance ?? 0);
       } catch (error) {
         console.error("Error fetching wallet balance:", error);
       }
@@ -95,14 +97,17 @@ export default function AuctionPage() {
 
     // Set up subscriptions
     let auctionUnsubscribe: () => void;
-    let bidsUnsubscribe: () => void;
+    let bidsUnsubscribe: { unsubscribe: () => void } | undefined;
 
     if (auctionId) {
-      auctionUnsubscribe = subscribeToAuction(auctionId, (updatedAuction) => {
-        setAuction(updatedAuction);
-      });
+      auctionUnsubscribe = subscribeToAuction(
+        auctionId,
+        (updatedAuction: Auction) => {
+          setAuction(updatedAuction);
+        }
+      );
 
-      bidsUnsubscribe = subscribeToBids(auctionId, (updatedBids) => {
+      bidsUnsubscribe = subscribeToBids(auctionId, (updatedBids: Bid[]) => {
         setBids(updatedBids);
       });
     }
@@ -110,7 +115,7 @@ export default function AuctionPage() {
     // Clean up subscriptions when component unmounts
     return () => {
       if (auctionUnsubscribe) auctionUnsubscribe();
-      if (bidsUnsubscribe) bidsUnsubscribe();
+      if (bidsUnsubscribe) bidsUnsubscribe.unsubscribe();
     };
   }, [auctionId]);
 
@@ -149,7 +154,7 @@ export default function AuctionPage() {
     setLoading(true);
 
     try {
-      await placeBidService(currentUser, auctionId, totalBidAmount);
+      await placeBid(currentUser, auctionId, totalBidAmount);
       // Clear bid input after successful bid
       setBidAmount("");
       setSelectedValue(null);
@@ -205,7 +210,7 @@ export default function AuctionPage() {
     if (auction) {
       setLoading(true);
       try {
-        await placeBidService(currentUser, auctionId, auction.buyout_price);
+        await placeBid(currentUser, auctionId, auction.buyout_price);
         // Explicitly end the auction after buyout and set current user as winner
         if (currentUser && username) {
           await endAuction(auctionId, currentUser, username);

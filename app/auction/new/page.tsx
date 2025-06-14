@@ -1,6 +1,6 @@
 "use client";
 import React, { ChangeEvent, useState, useEffect } from "react";
-import { anton } from "../../font/fonts";
+import { anton } from "../../lib/font/fonts";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../../services/client";
 import { useRouter } from "next/navigation";
