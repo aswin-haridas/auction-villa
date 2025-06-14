@@ -1,58 +1,39 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useMemory } from "../store/store";
 
 const symbols = ["𖤐", "𖤍", "⁶⁶⁶", "🕇"];
+const links = ["Basement", "Auction", "Create", "Bank"];
+const SYMBOL_INTERVAL = 800; // Time in milliseconds
 
-const Header: React.FC = () => {
+export default function Header() {
   const [symbol, setSymbol] = useState<string>("");
-  const [username, setUsername] = useState<string | null>("");
   const router = useRouter();
   const pathname = usePathname();
-
+  const user = useMemory((state) => state.user);
   useEffect(() => {
-    const checkUsername = () => {
-      const storedUsername = sessionStorage.getItem("username");
-      if (storedUsername) {
-        setUsername(storedUsername);
-      } else {
-        router.push("/auth");
-      }
-    };
-
-    checkUsername();
-
     const changeSymbol = () => {
       setSymbol(symbols[Math.floor(Math.random() * symbols.length)]);
     };
 
     changeSymbol();
-    const interval = setInterval(
-      changeSymbol,
-      Math.random() * (1200 - 500) + 500,
-    );
-
+    const interval = setInterval(changeSymbol, SYMBOL_INTERVAL);
     return () => clearInterval(interval);
-  }, [router]);
-
-  const handleSignOut = () => {
-    sessionStorage.removeItem("username");
-    sessionStorage.removeItem("user_id");
-    setUsername(null);
-    router.push("/auth");
-  };
-
-  // Don't show header on auth page
+  }, []);
   if (pathname === "/auth") {
     return null;
   }
+  const handleSignOut = () => {
+    router.push("/auth");
+  };
 
   return (
     <div className="w-full h-14 flex items-center pt-4 px-12 ">
       <div className="text-[#ba3737] flex-1">{symbol}</div>
       <div className="flex justify-around flex-1">
-        {["Basement", "Auction", "Create", "Bank"].map((item, idx) => (
+        {links.map((item, idx) => (
           <Link
             key={idx}
             href={
@@ -69,11 +50,9 @@ const Header: React.FC = () => {
           onClick={handleSignOut}
           className="text-[#ba3737] text-base cursor-pointer hover:underline"
         >
-          {username || "###"}
+          {user?.name || "###"}
         </button>
       </div>
     </div>
   );
-};
-
-export default Header;
+}

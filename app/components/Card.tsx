@@ -1,5 +1,5 @@
 import React from "react";
-import { playfair } from "../font/fonts";
+import { playfair } from "../lib/font/fonts";
 
 interface CardProps {
   image: string;
@@ -7,7 +7,7 @@ interface CardProps {
   category: string;
 }
 
-const AtomCard = ({ image, name, category }: CardProps) => (
+const Card = ({ image, name, category }: CardProps) => (
   <div className="break-inside-avoid w-full rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-[#242424] cursor-pointer">
     <div className="w-full">
       {image && (
@@ -29,4 +29,4 @@ const AtomCard = ({ image, name, category }: CardProps) => (
   </div>
 );
 
-export default AtomCard;
+export default Card;

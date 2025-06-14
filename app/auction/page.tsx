@@ -1,12 +1,11 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Card from "../components/AtomCard";
-import { anton } from "../font/fonts";
-import { useEffect, useState } from "react";
+import Card from "../components/Card";
+import { anton } from "../lib/font/fonts";
 import { useRouter } from "next/navigation";
-import { getAuctions } from "../services/auction";
-import { Auction } from "./auction";
+import { Auction } from "../lib/types/auction";
+import { useAuction } from "../lib/hooks/useAuction";
 
 function AuctionPage() {
   const router = useRouter();
@@ -14,8 +13,8 @@ function AuctionPage() {
   const [previousAuctions, setPreviousAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { getAuctions } = useAuction();
   useEffect(() => {
-    // Check if user is authenticated
     if (!sessionStorage.getItem("username")) {
       router.push("/auth");
       return;

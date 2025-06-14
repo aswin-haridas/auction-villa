@@ -1,27 +1,12 @@
 "use client";
+import React from "react";
+import { anton } from "../lib/font/fonts";
+import useBank from "../lib/hooks/useBank";
+import checkUser from "../lib/utils/checkUser";
 
-import React, { useEffect, useState } from "react";
-import { anton } from "../font/fonts";
-import { getWalletBalance } from "../services/bank";
-
-const Bank: React.FC = () => {
-  const [balance, setBalance] = useState<number>(0);
-
-  // Move sessionStorage access into useEffect (runs only in browser)
-  useEffect(() => {
-    const storedUserId = sessionStorage.getItem("user_id");
-
-    if (!storedUserId) {
-      window.location.href = "/auth";
-    }
-  }, []);
-
-  useEffect(() => {
-    getWalletBalance().then((balance) => {
-      setBalance(balance);
-    });
-  }, []);
-
+function Bank() {
+  checkUser();
+  const balance = useBank();
   return (
     <>
       <div className="px-12">
@@ -32,6 +17,5 @@ const Bank: React.FC = () => {
       </div>
     </>
   );
-};
-
+}
 export default Bank;
