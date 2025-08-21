@@ -19,19 +19,21 @@ export default function useBids(): BidsService {
   const { winAuction } = useAuction();
 
   async function placeBid(
-    userId: string,
+    username: string,
     auctionId: string,
     amount: number
   ): Promise<void> {
     const { data: user, error: userError } = await supabase
       .from("User")
-      .select("balance, username")
-      .eq("user_id", userId)
+      .select("user_id, balance, username")
+      .eq("username", username)
       .single();
 
     if (userError)
       throw new Error(`Failed to fetch user: ${userError.message}`);
     if (user.balance < amount) throw new Error("Insufficient balance");
+
+    const userId = user.user_id;
 
     const { data: auction, error: auctionError } = await supabase
       .from("Auction")

@@ -4,9 +4,11 @@ import { anton } from "../../lib/font/fonts";
 import { ArrowRightIcon, Trash2 } from "lucide-react";
 import { supabase } from "../../services/client";
 import { useRouter } from "next/navigation";
+import { useMemory } from "../../store/store";
 
 export default function CreateAuctionPage() {
   const router = useRouter();
+  const { username } = useMemory();
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -23,15 +25,13 @@ export default function CreateAuctionPage() {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    const userId = sessionStorage.getItem("user_id");
-    const username = sessionStorage.getItem("username");
-    if (!userId || !username) {
+    if (!username) {
       router.push("/auth");
     } else {
       setCurrentUser(username);
     }
     return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
-  }, [router, previewUrls]);
+  }, [router, previewUrls, username]);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>

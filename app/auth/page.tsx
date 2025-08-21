@@ -5,7 +5,6 @@ import { useUser } from "../lib/hooks/useUser";
 
 const AccessPage = () => {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
   const { loginUser } = useUser();
@@ -13,12 +12,17 @@ const AccessPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const user_id = await loginUser(username, password);
+    if (!username.trim()) {
+      setError("Please enter a username");
+      return;
+    }
 
-    if (user_id) {
+    const result = await loginUser(username);
+
+    if (result) {
       router.push("/");
     } else {
-      setError("Invalid credentials");
+      setError("Failed to login");
     }
   };
 
@@ -33,15 +37,6 @@ const AccessPage = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-2 text-white bg-transparent border border-[#878787] "
-            />
-          </div>
-          <div className="mb-4">
-            <input
-              placeholder="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 text-white bg-transparent border border-[#878787] "
             />
           </div>
