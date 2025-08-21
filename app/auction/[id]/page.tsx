@@ -121,7 +121,7 @@ export default function AuctionPage() {
 
   // Handle bid placement
   const handlePlaceBid = async () => {
-    if (!currentUser || !username) {
+    if (!currentUser) {
       alert("Please log in to place a bid");
       return;
     }
@@ -141,7 +141,7 @@ export default function AuctionPage() {
     const totalBidAmount = highestBid + bidIncrement;
 
     // Check if current user is already the highest bidder
-    if (sortedBids.length > 0 && sortedBids[0].username === username) {
+    if (sortedBids.length > 0 && sortedBids[0].username === currentUser) {
       alert("You are already the highest bidder!");
       return;
     }
@@ -212,8 +212,8 @@ export default function AuctionPage() {
       try {
         await placeBid(currentUser, auctionId, auction.buyout_price);
         // Explicitly end the auction after buyout and set current user as winner
-        if (currentUser && username) {
-          await endAuction(auctionId, currentUser, username);
+        if (currentUser) {
+          await endAuction(auctionId, undefined, currentUser);
         } else {
           await endAuction(auctionId);
         }

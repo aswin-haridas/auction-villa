@@ -3,7 +3,6 @@ import { supabase } from "@/app/services/client";
 import { useMemory } from "@/app/store/store";
 
 import { Painting } from "../types/painting";
-import { User } from "../types/user";
 
 export function usePainting(paintingId: string | null) {
   const [painting, setPainting] = useState<Painting | null>(null);
