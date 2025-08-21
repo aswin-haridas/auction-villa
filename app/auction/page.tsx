@@ -6,16 +6,18 @@ import { anton } from "../lib/font/fonts";
 import { useRouter } from "next/navigation";
 import { Auction } from "../lib/types/auction";
 import { useAuction } from "../lib/hooks/useAuction";
+import { useMemory } from "../store/store";
 
 function AuctionPage() {
   const router = useRouter();
   const [liveAuctions, setLiveAuctions] = useState<Auction[]>([]);
   const [previousAuctions, setPreviousAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { username } = useMemory();
 
   const { getAuctions } = useAuction();
   useEffect(() => {
-    if (!sessionStorage.getItem("username")) {
+    if (!username) {
       router.push("/auth");
       return;
     }

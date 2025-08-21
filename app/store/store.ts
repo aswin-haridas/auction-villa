@@ -6,6 +6,8 @@ type StoreState = {
   setBalance: (balance: number) => void;
   user: User | null;
   setUser: (user: User | null) => void;
+  username: string | null;
+  setUsername: (username: string | null) => void;
 };
 
 export const useMemory = create<StoreState>((set) => ({
@@ -13,4 +15,6 @@ export const useMemory = create<StoreState>((set) => ({
   setBalance: (balance) => set({ balance }),
   user: null,
   setUser: (user) => set({ user }),
+  username: null,
+  setUsername: (username) => set({ username }),
 }));

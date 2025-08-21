@@ -8,11 +8,13 @@ import { Auction, Bid } from "@/app/lib/types/auction";
 import useBank from "@/app/lib/hooks/useBank";
 import useBids from "@/app/lib/hooks/useBids";
 import { useAuction } from "@/app/lib/hooks/useAuction";
+import { useMemory } from "@/app/store/store";
 
 export default function AuctionPage() {
   const params = useParams();
   const router = useRouter();
   const auctionId = params.id as string;
+  const { username } = useMemory();
 
   // Use the useBids hook inside the component
   const { getBids, placeBid, subscribeToBids } = useBids();
@@ -38,7 +40,6 @@ export default function AuctionPage() {
 
   // User state
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
 
   // Values for bid increments instead of absolute values
@@ -74,9 +75,8 @@ export default function AuctionPage() {
   };
 
   useEffect(() => {
-    // Get user info from sessionStorage
-    setCurrentUser(sessionStorage.getItem("user_id"));
-    setUsername(sessionStorage.getItem("username"));
+    // Get user info from Zustand
+    setCurrentUser(username);
 
     // Fetch wallet balance
     const fetchWalletBalance = async () => {
