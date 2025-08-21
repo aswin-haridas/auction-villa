@@ -23,7 +23,7 @@ export function usePainting(paintingId: string | null) {
             "painting_id, name, images, acquire_date, category, owner, status, at_work, acquire_price, working_time, is_for_trade, is_for_rent, is_rented, rented_by, rental_end_date, rental_price"
           )
           .eq("painting_id", paintingId)
-          .eq("owner", user?.id)
+          .eq("owner", username)
           .single();
 
         if (error) throw error;
